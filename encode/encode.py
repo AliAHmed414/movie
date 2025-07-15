@@ -364,18 +364,16 @@ def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, sub
     Args:
         input_file: Path to input video file
         output_file: Path to output video file
-        audio_tracks: List of dicts with 'file', 'language', 'default', 'forced' keys
-        subtitles: List of dicts with 'file', 'language', 'default', 'forced' keys
+        audio_tracks: List of dicts with 'file', 'language', 'default', 'forced', 'title' keys
+        subtitles: List of dicts with 'file', 'language', 'default', 'forced', 'title' keys
         remove_metadata: If True, all metadata and chapters will be stripped
     """
     print(f"Adding subtitles and audio: {input_file} -> {output_file}")
 
-    # Start building ffmpeg command
     ffmpeg_cmd = ["ffmpeg", "-threads", "0", "-i", input_file]
-    
     input_index = 1
 
-    # Add audio track inputs
+    # Add audio inputs
     audio_map_info = []
     if audio_tracks:
         for i, audio in enumerate(audio_tracks):
@@ -385,7 +383,8 @@ def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, sub
                 'stream_index': i,
                 'language': audio.get('language', 'und'),
                 'default': audio.get('default', False),
-                'forced': audio.get('forced', False)
+                'forced': audio.get('forced', False),
+                'title': audio.get('title', '')
             })
             input_index += 1
 
@@ -399,20 +398,23 @@ def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, sub
                 'stream_index': i,
                 'language': subtitle.get('language', 'und'),
                 'default': subtitle.get('default', False),
-                'forced': subtitle.get('forced', False)
+                'forced': subtitle.get('forced', False),
+                'title': subtitle.get('title', '')
             })
             input_index += 1
 
-    # Map video stream (copy as-is)
+    # Map video
     ffmpeg_cmd += ["-map", "0:v", "-c:v", "copy"]
 
-    # Map audio streams
+    # Map audio
     if audio_tracks:
         for audio_info in audio_map_info:
             ffmpeg_cmd += ["-map", f"{audio_info['index']}:a"]
         ffmpeg_cmd += ["-c:a", "copy"]
         for i, audio_info in enumerate(audio_map_info):
             ffmpeg_cmd += [f"-metadata:s:a:{i}", f"language={audio_info['language']}"]
+            if audio_info['title']:
+                ffmpeg_cmd += [f"-metadata:s:a:{i}", f"title={audio_info['title']}"]
             disposition = []
             if audio_info['default']:
                 disposition.append("default")
@@ -423,13 +425,15 @@ def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, sub
     else:
         ffmpeg_cmd += ["-map", "0:a", "-c:a", "copy"]
 
-    # Map subtitle streams
+    # Map subtitles
     if subtitles:
         for subtitle_info in subtitle_map_info:
             ffmpeg_cmd += ["-map", f"{subtitle_info['index']}"]
         ffmpeg_cmd += ["-c:s", "mov_text"]
         for i, subtitle_info in enumerate(subtitle_map_info):
             ffmpeg_cmd += [f"-metadata:s:s:{i}", f"language={subtitle_info['language']}"]
+            if subtitle_info['title']:
+                ffmpeg_cmd += [f"-metadata:s:s:{i}", f"title={subtitle_info['title']}"]
             disposition = []
             if subtitle_info['default']:
                 disposition.append("default")
@@ -438,15 +442,16 @@ def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, sub
             if disposition:
                 ffmpeg_cmd += [f"-disposition:s:{i}", "+".join(disposition)]
 
-    # Metadata and chapters
+    # Metadata control
     if remove_metadata:
         ffmpeg_cmd += ["-map_metadata", "-1", "-map_chapters", "-1"]
     else:
         ffmpeg_cmd += ["-map_metadata", "0", "-map_chapters", "0"]
 
-    # Faststart for better web playback
+    # Faststart
     ffmpeg_cmd += ["-movflags", "+faststart", output_file]
 
+    # Execute
     print("Running FFmpeg (Add Subtitles/Audio):\n" + " ".join(ffmpeg_cmd))
     process = subprocess.run(ffmpeg_cmd)
     if process.returncode != 0:

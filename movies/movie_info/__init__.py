@@ -1,1 +1,1 @@
-from movie_info.movie_info import fetch_movie_data_by_imdb
+from .movie_info import *

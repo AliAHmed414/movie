@@ -2,8 +2,9 @@ import requests
 
 
 
-def upload_movie(
+async def upload_movie(
     title,
+    description,
     duration,
     release_year,
     poster_url,
@@ -59,7 +60,7 @@ def upload_movie(
 
     json_data = {
         'title': title,
-        'description': '',
+        'description': description,
         'duration': duration,
         'release_year': release_year,
         'poster_url': poster_url,
@@ -126,8 +127,7 @@ def upload_movie(
     }
 
     cookies = {
-        'cf_clearance': 'Uz5L8hl0QFKE4QhuewgQMzTYJuHAFFCV6iqaR6LYnCA-1745825383-1.2.1.1-oEHxCiNRVVq6nPRn562cksbV37_kTzRWpvKN6M.IUrH3meh0Wlbm.gbOVeA9_GR5_eBEuUusWCSvq3kCfyWhQVOM0fBBnxE2rIGrjeW8HNYpmO7LeGF9o78_Of68AT2JStoBYe229pGYeBw2BX2CGkdlbr5LnOt76YAa8qMCL8WmNyJSeFxVrRbgsxiYxergZm4yhKVkamKZjV2h.2y.Bdxzew5RfqLLk763pM7XN2QrdnbHSA6uIK6QZwyznFN0ydWQt0EOU416xG7UWoJmqG4FFAGhef8SkYj4ic9U8Icd3Th4uBIRD4l5jw7Y2FtJUAEhMAmsuCZgSHf7YFI.114izx8CrtDl4iimna1J_bo',
-        'auth_token': '962dbcd64bb2a956b7b329a6fb104c4bb24622b3acc735b0a6fcbd0936e36728',
+        'auth_token': '26a3c99ca55a006dca854cb8af4c3756cdc20c99b3f836e4b621bd78348cee07',
     }
 
     response = requests.post(
@@ -141,12 +141,11 @@ def upload_movie(
 
 
 
-def upload_subtitle(file_path: str, language: str = "ar") -> str:
+async def upload_subtitle(file_path: str, language: str = "ar") -> str:
     url = 'https://swag.halashow.com/ddtank/admin/subs'
 
     cookies = {
-        'cf_clearance': 'Uz5L8hl0QFKE4QhuewgQMzTYJuHAFFCV6iqaR6LYnCA-1745825383-1.2.1.1-oEHxCiNRVVq6nPRn562cksbV37_kTzRWpvKN6M.IUrH3meh0Wlbm.gbOVeA9_GR5_eBEuUusWCSvq3kCfyWhQVOM0fBBnxE2rIGrjeW8HNYpmO7LeGF9o78_Of68AT2JStoBYe229pGYeBw2BX2CGkdlbr5LnOt76YAa8qMCL8WmNyJSeFxVrRbgsxiYxergZm4yhKVkamKZjV2h.2y.Bdxzew5RfqLLk763pM7XN2QrdnbHSA6uIK6QZwyznFN0ydWQt0EOU416xG7UWoJmqG4FFAGhef8SkYj4ic9U8Icd3Th4uBIRD4l5jw7Y2FtJUAEhMAmsuCZgSHf7YFI.114izx8CrtDl4iimna1J_bo',
-        'auth_token': '962dbcd64bb2a956b7b329a6fb104c4bb24622b3acc735b0a6fcbd0936e36728',
+        'auth_token': '26a3c99ca55a006dca854cb8af4c3756cdc20c99b3f836e4b621bd78348cee07',
     }
     headers = {
         'Accept': '*/*',

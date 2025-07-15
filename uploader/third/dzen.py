@@ -29,6 +29,24 @@ def setup_driver():
     
     return webdriver.Edge(service=service, options=options)
 
+
+def apply_cookies(driver):
+    cookie_string = '''
+    HgGedof=1; zencookie=7531797071752581269; zen_sso_checked=1; Session_id=noauth:1752581271; sessar=1.1204.CiDmMfadzG-6eQL9nPlZtaynZYTeiAdB3jA34Gq9taugfg.2tSWBAahKjSBntrBqUTkfQ-Vi41_T9Jt4DPYb51BEvo; yandex_login=; ys=c_chck.4292637706; yandexuid=6610916351752581271; mda2_beacon=1752581271613; sso_status=sso.passport.yandex.ru:synchronized; zen_vk_sso_checked=1; zen_session_id=Mrfsnv6IDZ4xlKg5M5E18ekq6Q8wvCGoog8.1752581273137; _yasc=nR7KKZ56msTkT57bMPXPI7/PXJk/KAtRsC34q7tr3FulibCt543cviv/mLceVRDYRFI=; Zen-User-Data={%22zen-theme%22:%22light%22%2C%22zen-theme-setting%22:%22light%22}; is_auth_through_phone=true; is_online_stat=false; stable_city=0; has_stable_city=true; zen_gid=11485; zen_vk_gid=84; one_day_socdem=+; zen_ms_socdem_pixels=2495135%2C3212781%2C3212787; crookie=thepB5ZcciB+w35i9e4fm8ObluZNu6UseEzz23QTKyLPfcYWn+hbv4R30Y7ovbe6wWpTPPKDyTJiq3Oca9VRa1OYcFs=; cmtchd=MTc1MjU4MTI3OTAxMg==; news_cryproxy_sync_ok=1; cryproxy_sync_ok=1
+    '''
+    for part in cookie_string.strip().split("; "):
+        try:
+            name, value = part.split("=", 1)
+            driver.add_cookie({
+                "name": name,
+                "value": value,
+                "domain": ".dzen.ru",
+                "path": "/"
+            })
+        except Exception as e:
+            print(f"Could not add cookie {name}: {e}")
+
+          
 def wait_for_upload(driver):
     # Wait for upload completion with dynamic timeout based on file size
     file_size_mb = os.path.getsize("/home/kda/comdy.mp4") / (1024 * 1024) if os.path.exists("/home/kda/comdy.mp4") else 100
@@ -93,43 +111,17 @@ def login_and_upload(driver, video_path, title="Comedy Video"):
         title_textarea.send_keys(title)
         print("Title set")
     except: print("Could not set title")
+
+    url = driver.current_url
+    if "videoEditorPublicationId=" in url:
+        video_id = url.split("videoEditorPublicationId=")[1].split("&")[0]
     
     # Publish
     WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='publish-btn']"))).click()
     print("Published")
     
-    # Extract video URL with multiple attempts
-    for attempt in range(6):
-        time.sleep(10)
-        try:
-            url = driver.current_url
-            
-            if "videoEditorPublicationId=" in url:
-                video_id = url.split("videoEditorPublicationId=")[1].split("&")[0]
-                return f"https://dzen.ru/video/watch/{video_id}"
-            
-            if "/video/watch/" in url:
-                return url
-            
-            match = re.search(r'"videoId":"([^"]+)"', driver.page_source)
-            if match:
-                return f"https://dzen.ru/video/watch/{match.group(1)}"
-            
-            try:
-                link = driver.find_element(By.CSS_SELECTOR, "a[href*='/video/watch/']")
-                return link.get_attribute("href")
-            except: pass
-            
-        except Exception as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
-    
-    try:
-        driver.get("https://dzen.ru/profile/editor/id/67fe5ca67c0c2872e1590bec/publications?state=published")
-        time.sleep(5)
-        link = driver.find_element(By.CSS_SELECTOR, "a[href*='/video/watch/']")
-        return link.get_attribute("href")
-    except:
-        return None
+    if video_id: return f"https://dzen.ru/video/watch/{video_id}"
+    else: return None
 
 def main_with_path(video_path, title="Uploaded Video"):
     if not os.path.exists(video_path):
