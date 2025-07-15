@@ -2,7 +2,7 @@ import sys
 import os
 import requests
 import glob
-from insert.admin import upload_movie,upload_subtitle
+
 import re
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -27,6 +27,7 @@ import uploader
 import uploader.third.dzen
 import uploader.third.ok
 import uploader.third.vk
+from insert.admin import upload_movie,upload_subtitle
 
 async def main():
     api = "http://localhost:8080"
@@ -130,20 +131,24 @@ async def main():
         if en_id:
             subtitles_links.append(en_id)
 
+        doc_result = uploader.doc.upload_doc_to_vk_wall(
+            output_file,
+            title=data['imdb_id']
+        )
+        doc_id = ''
+        if doc_result["id"]:
+            doc_id =  doc_result["id"]
         result = await process_and_upload_movie(
             data=info,
             third_party_links=third_party_links,
-            subtitles=subtitles_links
+            subtitles=subtitles_links,
+            doc_id=doc_id
         )
-    uploader.doc.upload_doc_to_vk_wall(
-        output_file,
-        title=data['imdb_id']
-    )
     if result.get("response", {}).get("code") == 201:
         print("✅ Movie uploaded successfully")
         requests.post(f"{api}/movie/{title}")
 
-async def process_and_upload_movie(data,third_party_links=None,subtitles=None):
+async def process_and_upload_movie(data,third_party_links=None,subtitles=None,doc_id=None):
     # Step 1: Fetch movie data
     
 
@@ -230,7 +235,7 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None):
         'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': '', 'url_2160p': '', 'url_4320p': ''
     }],
     'paid_download_links': [{
-        'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': ''
+        'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': doc_id if doc_id else ''
     }],
     'paid_third_party_links': [''],
 }

@@ -1,4 +1,4 @@
-from selenium import webdriver
+import undetected_chromedriver as uc
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.common.by import By
@@ -10,24 +10,20 @@ import os
 import re
 
 def setup_driver():
-    options = Options()
-    options.add_argument("--headless=new")
+    options = uc.ChromeOptions()
+    options.add_argument("--headless=new")  # Use new headless mode for recent versions
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-software-rasterizer")
     options.add_argument("--window-size=1920,1080")
+    options.add_argument(f"--remote-debugging-port=0") 
     options.add_experimental_option("prefs", {
         "profile.default_content_setting_values.notifications": 2
     })
 
-    # Path to Edge binary
-    options.binary_location = "/usr/bin/microsoft-edge"
-    
-    # Create service object for Edge
-    service = Service()  # Will use default msedgedriver path or specify: Service("/path/to/msedgedriver")
-    
-    return webdriver.Edge(service=service, options=options)
+    # Match the major version of your installed Chrome
+    return uc.Chrome(options=options,version_main=138)
 
 
 def apply_cookies(driver):
