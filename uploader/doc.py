@@ -5,7 +5,7 @@ ACCESS_TOKEN = "vk1.a.eymMoZyjcCsp78iISnvSXNpCyLLYP1JTIaA2iS9XqdlakM1kf75ALres_K
 COMMUNITY_ID = 229795703
 VK_API_VERSION = "5.199"
 
-def upload_doc_to_vk_wall(file_path: str, title: str = None):
+async def upload_doc_to_vk_wall(file_path: str, title: str = None):
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -70,6 +70,6 @@ def upload_doc_to_vk_wall(file_path: str, title: str = None):
     }
 
 if __name__ == "__main__":
-    result = upload_doc_to_vk_wall("/home/kda/Downloads/tt11001074.ara.srt", "Dune Movie")
+    result = upload_doc_to_vk_wall("/tmp/tt28353218/1080p/tt28353218/1080p_tt28353218.mp4", "Dune Movie")
     print("✅ Uploaded!")
     print("ID:", result["id"])

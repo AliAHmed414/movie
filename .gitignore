@@ -1,0 +1,58 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+.cache
+nosetests.xml
+test-results/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VSCode / JetBrains / IDE files
+.vscode/
+.idea/
+
+# Mac & Linux trash
+.DS_Store
+.Trashes
+Thumbs.db
+
+# Output files
+*.zip
+*.tar.gz
+*.egg-info/
+dist/
+build/
+
+# Custom local folders
+/tmp/
+ss
+ss\ copy
+steup\ copy.sh

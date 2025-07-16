@@ -18,7 +18,7 @@ def setup_driver():
     })
 
     # Match the major version of your installed Chrome
-    return uc.Chrome(options=options,version_main=138)
+    return uc.Chrome(options=options)
 
 def safe_click(driver, element):
     for method in [lambda: element.click(), lambda: driver.execute_script("arguments[0].click();", element)]:
@@ -131,7 +131,7 @@ def main_with_path(video_path):
 
 def main():
     """Original main function for backward compatibility"""
-    video_path = "/workspaces/tools/downloads/tt36159609/1080p/tt36159609/1080p_tt36159609.mp4"
+    video_path = "/workspaces/codespaces-blank/big_buck_bunny_720p_1mb.mp4"
     return main_with_path(video_path)
 
 if __name__ == "__main__": 

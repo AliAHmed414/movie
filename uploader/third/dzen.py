@@ -23,12 +23,12 @@ def setup_driver():
     })
 
     # Match the major version of your installed Chrome
-    return uc.Chrome(options=options,version_main=138)
+    return uc.Chrome(options=options)
 
 
 def apply_cookies(driver):
     cookie_string = '''
-    HgGedof=1; zencookie=7531797071752581269; zen_sso_checked=1; Session_id=noauth:1752581271; sessar=1.1204.CiDmMfadzG-6eQL9nPlZtaynZYTeiAdB3jA34Gq9taugfg.2tSWBAahKjSBntrBqUTkfQ-Vi41_T9Jt4DPYb51BEvo; yandex_login=; ys=c_chck.4292637706; yandexuid=6610916351752581271; mda2_beacon=1752581271613; sso_status=sso.passport.yandex.ru:synchronized; zen_vk_sso_checked=1; zen_session_id=Mrfsnv6IDZ4xlKg5M5E18ekq6Q8wvCGoog8.1752581273137; _yasc=nR7KKZ56msTkT57bMPXPI7/PXJk/KAtRsC34q7tr3FulibCt543cviv/mLceVRDYRFI=; Zen-User-Data={%22zen-theme%22:%22light%22%2C%22zen-theme-setting%22:%22light%22}; is_auth_through_phone=true; is_online_stat=false; stable_city=0; has_stable_city=true; zen_gid=11485; zen_vk_gid=84; one_day_socdem=+; zen_ms_socdem_pixels=2495135%2C3212781%2C3212787; crookie=thepB5ZcciB+w35i9e4fm8ObluZNu6UseEzz23QTKyLPfcYWn+hbv4R30Y7ovbe6wWpTPPKDyTJiq3Oca9VRa1OYcFs=; cmtchd=MTc1MjU4MTI3OTAxMg==; news_cryproxy_sync_ok=1; cryproxy_sync_ok=1
+    HgGedof=1; zencookie=7531797071752581269; zen_sso_checked=1; Session_id=noauth:1752581271; sessar=1.1204.CiDmMfadzG-6eQL9nPlZtaynZYTeiAdB3jA34Gq9taugfg.2tSWBAahKjSBntrBqUTkfQ-Vi41_T9Jt4DPYb51BEvo; yandex_login=; yandexuid=6610916351752581271; mda2_beacon=1752581271613; zen_vk_sso_checked=1; zen_session_id=Mrfsnv6IDZ4xlKg5M5E18ekq6Q8wvCGoog8.1752581273137; _yasc=nR7KKZ56msTkT57bMPXPI7/PXJk/KAtRsC34q7tr3FulibCt543cviv/mLceVRDYRFI=; Zen-User-Data={%22zen-theme%22:%22light%22%2C%22zen-theme-setting%22:%22light%22}; is_auth_through_phone=true; is_online_stat=false; stable_city=0; has_stable_city=true; zen_gid=11485; zen_vk_gid=84; one_day_socdem=+; zen_ms_socdem_pixels=2495135%2C3212781%2C3212787; crookie=thepB5ZcciB+w35i9e4fm8ObluZNu6UseEzz23QTKyLPfcYWn+hbv4R30Y7ovbe6wWpTPPKDyTJiq3Oca9VRa1OYcFs=; cmtchd=MTc1MjU4MTI3OTAxMg==; news_cryproxy_sync_ok=1; cryproxy_sync_ok=1
     '''
     for part in cookie_string.strip().split("; "):
         try:
@@ -62,20 +62,12 @@ def wait_for_upload(driver):
 def login_and_upload(driver, video_path, title="Comedy Video"):
     # Login with cookies
     driver.get("https://dzen.ru")
-    cookies = [
-        {"name": "zencookie", "value": "8297893231744362383"},
-        {"name": "yandexuid", "value": "4525498611744362383"},
-        {"name": "zen_session_id", "value": "OhYi0aEfWJ4WyVHhBJ0nitiKfdOSDe1FqYd.1751052297362"},
-        {"name": "Session_id", "value": "3:1751198729.5.0.1751198729440:hknTnA:ad22.1.0.0:3.1:366200649.3:1749838046|64:10029481.483364.yhJ_JqWAm1v_d9_VrNWAdgGyXPE"}
-    ]
-    
-    for c in cookies:
-        try: driver.add_cookie({**c, "domain": ".dzen.ru", "path": "/"})
-        except: pass
-    
+    time.sleep(1)  # Wait for the page to load
+    apply_cookies(driver)
+    time.sleep(1)  
     # Navigate and upload
     driver.get("https://dzen.ru/profile/editor/id/67fe5ca67c0c2872e1590bec/publications?state=published")
-    time.sleep(3)
+    time.sleep(2)
     
     # Close modals
     try:
@@ -122,7 +114,7 @@ def login_and_upload(driver, video_path, title="Comedy Video"):
 def main_with_path(video_path, title="Uploaded Video"):
     if not os.path.exists(video_path):
         return None
-    
+
     driver = setup_driver()
     try:
         return login_and_upload(driver, video_path, title)
@@ -132,7 +124,7 @@ def main_with_path(video_path, title="Uploaded Video"):
         driver.quit()
 
 def main():
-    return main_with_path("/workspaces/tools/downloads/tt23131648/1080p/tt23131648/1080p_tt23131648.mp4", "Comssedy Video")
+    return main_with_path("/workspaces/codespaces-blank/big_buck_bunny_720p_1mb.mp4", "Comssedy Video")
 
 if __name__ == "__main__":
     result = main()
