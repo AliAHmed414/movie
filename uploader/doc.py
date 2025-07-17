@@ -1,75 +1,73 @@
-import requests
-import os
+import requests, os, time, json
 
-ACCESS_TOKEN = "vk1.a.eymMoZyjcCsp78iISnvSXNpCyLLYP1JTIaA2iS9XqdlakM1kf75ALres_K5AmTWiQj2ALYbbs1r6VD421H_A7wqymG-VVoQSl4hOXvmy03_HdBTjqBLSbZS0amZCwQw_cXmb9xDkFX1odWcZPNxI62Nm5iWuM4vQ39-cGqExS0hnycAKs1RdsuZUsH2bhw2GniJNP8v5B-Udo_Zr2DdrPQ"
-COMMUNITY_ID = 229795703
-VK_API_VERSION = "5.199"
+# --- Configuration ---
+VK_API = 'https://api.vk.com/method/'
+VERSION = '5.199'
+TOKENS_FILE = 'uploader/doc.json'  # path to your token list
 
-def upload_doc_to_vk_wall(file_path: str, title: str = None):
+def upload_doc(file_path: str, title: str = None):
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}")
+        print("❌ File not found.")
+        return None
 
-    title = title or os.path.basename(file_path)
+    name = title or os.path.basename(file_path)
 
-    # STEP 1: get upload URL
-    resp = requests.get(
-        "https://api.vk.com/method/docs.getWallUploadServer",
-        params={
-            "group_id": COMMUNITY_ID,
-            "access_token": ACCESS_TOKEN,
-            "v": VK_API_VERSION
-        }
-    )
-    data = resp.json()
-    if not data.get("response", {}).get("upload_url"):
-        raise Exception(f"Failed to get upload URL: {data}")
+    # Load tokens list from JSON
+    with open(TOKENS_FILE, 'r') as f:
+        tokens = json.load(f)
 
-    upload_url = data["response"]["upload_url"]
-    print("→ Upload URL:", upload_url)
+    for entry in tokens:
+        if not entry.get("working", True):
+            continue
 
-    # STEP 2: upload the file
-    ext = os.path.splitext(file_path)[1].lower()
-    mime = "video/mp2t" if ext == ".ts" else "application/octet-stream"
+        token = entry["token"]
+        group_id = entry["id"]
 
-    with open(file_path, "rb") as fp:
-        files = {"file": (os.path.basename(file_path), fp, mime)}
-        upload_resp = requests.post(upload_url, files=files)
+        try:
+            def vk_call(method, params, delay=0):
+                if delay:
+                    time.sleep(delay)
+                params.update({'access_token': token, 'v': VERSION})
+                r = requests.get(VK_API + method, params=params)
+                r.raise_for_status()
+                data = r.json()
+                if 'error' in data:
+                    raise Exception(f"VK Error {data['error']['error_code']}: {data['error']['error_msg']}")
+                return data.get('response')
 
-    # check HTTP
-    if upload_resp.status_code != 200:
-        raise Exception(f"Upload HTTP {upload_resp.status_code}: {upload_resp.text}")
+            # Get upload server for this group
+            upload_info = vk_call('docs.getWallUploadServer', {'group_id': group_id})
 
-    # try parse JSON
-    try:
-        upload_data = upload_resp.json()
-    except ValueError:
-        raise Exception(f"Upload response not JSON:\n{upload_resp.text}")
+            # Upload file to the server
+            with open(file_path, 'rb') as f:
+                res = requests.post(upload_info['upload_url'], files={'file': (name, f)})
+                res.raise_for_status()
+                file_data = res.json().get('file')
+                if not file_data:
+                    raise Exception("❌ Upload failed.")
 
-    if "file" not in upload_data:
-        raise Exception(f"Upload failed, no 'file' in response: {upload_data}")
+            # Save the document to VK
+            saved = vk_call('docs.save', {'file': file_data, 'title': name, 'group_id': group_id}, delay=1)
+            doc = saved.get('doc') if isinstance(saved, dict) else saved[0]
 
-    print("→ Uploaded, got file param.")
+            # Mark this token as working and save status
+            entry["working"] = True
+            entry["message"] = ""
+            with open(TOKENS_FILE, "w") as f:
+                json.dump(tokens, f, indent=2, ensure_ascii=False)
 
-    # STEP 3: save the document
-    save_resp = requests.get(
-        "https://api.vk.com/method/docs.save",
-        params={
-            "file": upload_data["file"],
-            "title": title,
-            "access_token": ACCESS_TOKEN,
-            "v": VK_API_VERSION
-        }
-    )
-    save_data = save_resp.json()
-    if "response" not in save_data:
-        raise Exception(f"Save failed: {save_data}")
+            return f"doc{doc['owner_id']}_{doc['id']}"
 
-    doc = save_data["response"]["doc"]
-    return {
-        "id":    f"doc{doc['owner_id']}_{doc['id']}",
-    }
+        except Exception as e:
+            print(f"⚠️  Token failed ({entry.get('id')}): {e}")
+            entry["working"] = False
+            entry["message"] = str(e)
+            with open(TOKENS_FILE, "w") as f:
+                json.dump(tokens, f, indent=2, ensure_ascii=False)
+
+    print("❌ All tokens failed.")
+    return None
 
 if __name__ == "__main__":
-    result = upload_doc_to_vk_wall("/home/kda/Pictures/bot/yt.py", "Dune Movie")
-    print("✅ Uploaded!")
-    print("ID:", result["id"])
+    doc_id = upload_doc("/home/kda/Pictures/bot/steup.sh")
+    print(doc_id)
