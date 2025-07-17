@@ -2,7 +2,7 @@ import sys
 import os
 import requests
 import glob
-
+import shutil
 import re
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -68,7 +68,7 @@ def resolve_imdb_redirect(imdb_id: str) -> str:
 
 async def main():
     try:
-        api = "http://localhost:8080"
+        api = "http://47.237.25.164:8080"
         res = requests.get(f"{api}/movie")
         title = ""
         if res.status_code == 200:
@@ -196,12 +196,12 @@ async def main():
                 subtitles_links.append(en_id)
             doc_result = None
             try:
-                doc_result = await uploader.doc.upload_doc_to_vk_wall(
+                doc_result =  uploader.doc.upload_doc_to_vk_wall(
                     output_file,
                     title=data['imdb_id']
                 )
             except Exception as e:
-                doc_result = await uploader.doc.upload_doc_to_vk_wall(
+                doc_result =  uploader.doc.upload_doc_to_vk_wall(
                     output_file,
                     title=data['imdb_id']
                 )
@@ -221,14 +221,18 @@ async def main():
             requests.post(f"{api}/movie/{title}")
         else:
             print(result)
-        file_path = f"/tmp/{data['imdb_id']}"
-        if os.path.exists(file_path):
-            os.remove(file_path)
     except:
+        traceback.print_exc()
+
+    finally:
         file_path = f"/tmp/{data['imdb_id']}"
-        if os.path.exists(file_path):
-            os.remove(file_path)
-    
+        if file_path and os.path.exists(file_path):
+            try:
+                shutil.rmtree(file_path)
+                print(f"🧹 Cleaned up: {file_path}")
+            except Exception as cleanup_err:
+                print(f"⚠️ Failed to remove {file_path}: {cleanup_err}")
+
 
 async def process_and_upload_movie(data,third_party_links=None,subtitles=None,doc_id=None):
     # Step 1: Fetch movie data
@@ -263,18 +267,42 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
     genres_ar = data.get('genres_ar', [])
     genres = list(dict.fromkeys(genres_ar + genres_en))
 
-    # Step 4: Normalize age rating to match your DB enum
-    tmdb_rating = data.get("age_rating", "G")
+
     rating_map = {
-        "G": "G",
-        "PG": "PG",
-        "PG-13": "PG-12",
-        "R": "R-15",
-        "NC-17": "R18",
-        "TV-MA": "R-16",
-        "TV-14": "PG-15",
+        # --- G ---
+        "0": "G", "0+": "G", "All": "G", "ALL": "G", "AA": "G", "A": "G", "AL": "G", "ATP": "G",
+        "Genel İzleyici Kitlesi": "G", "U": "G", "E": "G", "SU": "G", "Btl": "G",
+        "G": "G", "P": "G", "6": "G", "7": "G", "6+": "G", "7+": "G", "6A": "G", "6A+": "G",
+        "Públicos": "G", "AP": "G",
+
+        # --- PG ---
+        "PG": "PG", "PG12": "PG", "PG-12": "PG", "PG13": "PG-12", "PG-13": "PG-12",
+        "7-9PG": "PG", "10-12PG": "PG", "UA": "PG", "U/A 7+": "PG", "U/A 13+": "PG",
+
+        # --- PG-12 ---
+        "12": "PG-12", "12A": "PG-12", "12+": "PG-12", "K-12": "PG-12", "I": "PG-12", "N-13": "PG-12",
+
+        # --- PG-15 ---
+        "13": "PG-15", "13+": "PG-15", "14": "PG-15", "14A": "PG-15", "15": "PG-15", "15+": "PG-15",
+        "B": "PG-15", "B-15": "PG-15", "M": "PG-15", "TV-14": "PG-15", "U/A 16+": "PG-15",
+
+        # --- R-15 ---
+        "R": "R-15", "R13": "R-15", "R15": "R-15", "RP13": "R-15", "RP16": "R-15", "IIA": "R-15",
+        "II": "R-15", "R15+": "R-15", "TV-MA": "R-15",
+
+        # --- R-16 ---
+        "16": "R-16", "16+": "R-16", "M/16": "R-16", "K-16": "R-16", "K15": "R-16", "K16": "R-16",
+        "RP18": "R-16", "R16": "R-16", "R-16": "R-16",
+
+        # --- R18 ---
+        "18": "R18", "18+": "R18", "M/18": "R18", "K-18": "R18", "K18": "R18", "R18": "R18",
+        "R-18": "R18", "R18+": "R18", "NC16": "R18", "NC-17": "R18", "18SG": "R18", "18SX": "R18",
+        "18PA": "R18", "18PL": "R18", "III": "R18", "X": "R18", "X18": "R18", "XX": "R18",
+        "20": "R18", "21+": "R18", "MA 15+": "R18", "Restricted Screening": "R18", "D": "R18",
+        "TV-MA": "R18", "R21": "R18", "S": "R18",
+        "Banned": "R18"
     }
-    age_rating = rating_map.get(tmdb_rating, "")
+        
 
     
     # Step 5: Other fields
@@ -289,8 +317,9 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
     if match:
         trailer_id = match.group(1)
 
-
     logo_url = data.get('logo', '')
+    if data.get("age_rating") == "" or not data.get("age_rating"):
+        data["age_rating"] = "G"
     payload = {
     'title': title,
     'description': description,
@@ -303,7 +332,7 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
     'logo_url': logo_url,
     'hot_video_url': '',
     'status': "released",
-    'age_rating': age_rating,
+    'age_rating': rating_map.get(data.get('age_rating', 'G'), 'G'),
     'subtitles': subtitles,
     'directors': list(dict.fromkeys(data.get('directors', []))),
     'actors': list(dict.fromkeys(data.get('cast', []))),
