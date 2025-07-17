@@ -194,9 +194,9 @@ async def main():
             en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"),f"en_{data['imdb_id']}")
             if en_id:
                 subtitles_links.append(en_id)
-            doc_result = None
+            
             try:
-                doc_result =  uploader.doc.upload_doc(
+                doc_id =  uploader.doc.upload_doc(
                     output_file,
                     title=data['imdb_id']
                 )
@@ -204,9 +204,7 @@ async def main():
                 print(f"DOCERROR: {e}")
                 pass
             
-            doc_id = ''
-            if doc_result["id"]:
-                doc_id =  doc_result["id"]
+
             result = await process_and_upload_movie(
                 data=info,
                 third_party_links=third_party_links,
