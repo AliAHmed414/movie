@@ -170,30 +170,23 @@ async def main():
                 os.remove(input_file)
                 third_party_links = []
                 subtitles_links = []
-                if torrent['quality'] == "1080p" or  i == 0:
-                    try:
-                        dzen_url = uploader.third.dzen.main_with_path(output_file,data['imdb_id'])
-                        third_party_links.append(dzen_url)
-                    except Exception as e:
-                        print(e)
-                        pass
-                    try:
-                        ok_url = uploader.third.ok.main_with_path(output_file)
-                        third_party_links.append(ok_url)
-                    except Exception as e:
-                        print(e)
-                        pass
+                # if torrent['quality'] == "1080p" or  i == 0:
+                #     try:
+                #         dzen_url = uploader.third.dzen.main_with_path(output_file,data['imdb_id'])
+                #         third_party_links.append(dzen_url)
+                #     except Exception as e:
+                #         print(e)
+                #         pass
+                #     try:
+                #         ok_url = uploader.third.ok.main_with_path(output_file)
+                #         third_party_links.append(ok_url)
+                #     except Exception as e:
+                #         print(e)
+                #         pass
 
                     
 
                 break
-            info = await movie_info.fetch_movie_data_by_imdb(data['imdb_id'])
-            ar_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"),f"ar_{data['imdb_id']}")
-            if  ar_id:
-                subtitles_links.append(ar_id)
-            en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"),f"en_{data['imdb_id']}")
-            if en_id:
-                subtitles_links.append(en_id)
             
             try:
                 doc_id =  uploader.doc.upload_doc(
@@ -203,6 +196,14 @@ async def main():
             except Exception as e:
                 print(f"DOCERROR: {e}")
                 pass
+            
+            info = await movie_info.fetch_movie_data_by_imdb(data['imdb_id'])
+            ar_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"),f"ar_{data['imdb_id']}")
+            if  ar_id:
+                subtitles_links.append(ar_id)
+            en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"),f"en_{data['imdb_id']}")
+            if en_id:
+                subtitles_links.append(en_id)
             
 
             result = await process_and_upload_movie(

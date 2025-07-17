@@ -3,7 +3,8 @@ import requests, os, time, json
 # --- Configuration ---
 VK_API = 'https://api.vk.com/method/'
 VERSION = '5.199'
-TOKENS_FILE = 'uploader/doc.json'  # path to your token list
+TOKENS_FILE = os.path.join(os.path.dirname(__file__), 'doc.json')
+
 
 def upload_doc(file_path: str, title: str = None):
     if not os.path.exists(file_path):
