@@ -196,15 +196,12 @@ async def main():
                 subtitles_links.append(en_id)
             doc_result = None
             try:
-                doc_result =  uploader.doc.upload_doc_to_vk_wall(
+                doc_result =  uploader.doc.upload_doc(
                     output_file,
                     title=data['imdb_id']
                 )
             except Exception as e:
-                doc_result =  uploader.doc.upload_doc_to_vk_wall(
-                    output_file,
-                    title=data['imdb_id']
-                )
+                print(f"DOCERROR: {e}")
                 pass
             
             doc_id = ''
