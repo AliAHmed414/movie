@@ -183,18 +183,18 @@ async def main():
                 third_party_links = []
                 subtitles_links = []
 
-                if torrent['quality'] == "1080p" or i == 0:
-                    try:
-                        dzen_url = uploader.third.dzen.main_with_path(output_file, data['imdb_id'])
-                        third_party_links.append(dzen_url)
-                    except Exception as e:
-                        print(e)
+                # if torrent['quality'] == "1080p" or i == 0:
+                #     try:
+                #         dzen_url = uploader.third.dzen.main_with_path(output_file, data['imdb_id'])
+                #         third_party_links.append(dzen_url)
+                #     except Exception as e:
+                #         print(e)
 
-                    try:
-                        ok_url = uploader.third.ok.main_with_path(output_file)
-                        third_party_links.append(ok_url)
-                    except Exception as e:
-                        print(e)
+                #     try:
+                #         ok_url = uploader.third.ok.main_with_path(output_file)
+                #         third_party_links.append(ok_url)
+                #     except Exception as e:
+                #         print(e)
 
                 break
 
@@ -209,8 +209,8 @@ async def main():
                     url
                 ]
                 result = subprocess.run(cmd, capture_output=True, text=True)
-                print(result)
                 response_json = json.loads(result.stdout)
+                print(response_json)
                 if response_json.get('success'):
                     doc_url = response_json.get('url')
                     doc_id = doc_url.split('/')[-1]

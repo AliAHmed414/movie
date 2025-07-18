@@ -4,6 +4,7 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const path = require('path');
 const fs = require('fs');
+const { promisify } = require('util');
 
 puppeteer.use(StealthPlugin());
 
@@ -32,7 +33,7 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 4 * 1024 * 1024 * 1024
+    fileSize: 4 * 1024 * 1024 * 1024 // 100MB limit
   }
 });
 
@@ -43,7 +44,7 @@ async function initializeBrowser() {
     const userDataDir = '/home/go/.config/google-chrome';
     
     browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       userDataDir,
       args: [
         '--profile-directory=Default',
@@ -125,7 +126,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 async function uploadToVK(filePath, fileName) {
   try {
     // Navigate to docs page (in case we're not there)
-  
+   // await page.goto('https://vk.com/docs', { waitUntil: 'domcontentloaded' });
     
     // Wait for and click the real upload button in the header
     const uploadBtnSelector = '#spa_root > div > div:nth-child(2) button';
@@ -148,10 +149,14 @@ async function uploadToVK(filePath, fileName) {
     // Wait for the Save button to become clickable (upload completed)
     await page.waitForSelector('[data-testid="docs_modal_save_button"]:not([disabled])', { 
       visible: true, 
-      timeout: 300000 
+      timeout: 400000 
     });
+    const [el] = await page.$x('/html/body/div[7]/div/div[2]/div/div[3]/div/div[2]/form/div[2]/div/label[4]/span');
+    if (el) {
+      await el.click();
+    }
     console.log('Upload completed, Save button is ready');
-    
+    page.$eval()
     // Click the Save button
     await page.click('[data-testid="docs_modal_save_button"]');
     console.log('Clicked Save button');
