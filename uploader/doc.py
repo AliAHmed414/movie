@@ -36,8 +36,8 @@ def upload_doc(file_path: str, title: str = None):
                     raise Exception(f"VK Error {data['error']['error_code']}: {data['error']['error_msg']}")
                 return data.get('response')
 
-            # Get upload server for this group
-            upload_info = vk_call('docs.getWallUploadServer', {'group_id': group_id})
+            # Prefer messages upload server for larger files
+            upload_info = vk_call('docs.getMessagesUploadServer', {'type': 'doc', 'peer_id': 2000000001})
 
             # Upload file to the server
             with open(file_path, 'rb') as f:
@@ -47,11 +47,11 @@ def upload_doc(file_path: str, title: str = None):
                 if not file_data:
                     raise Exception("❌ Upload failed.")
 
-            # Save the document to VK
-            saved = vk_call('docs.save', {'file': file_data, 'title': name, 'group_id': group_id}, delay=1)
+            # Save the document
+            saved = vk_call('docs.save', {'file': file_data, 'title': name}, delay=1)
             doc = saved.get('doc') if isinstance(saved, dict) else saved[0]
 
-            # Mark this token as working and save status
+            # Mark token as working
             entry["working"] = True
             entry["message"] = ""
             with open(TOKENS_FILE, "w") as f:
@@ -69,6 +69,7 @@ def upload_doc(file_path: str, title: str = None):
     print("❌ All tokens failed.")
     return None
 
+
 if __name__ == "__main__":
-    doc_id = upload_doc("/home/kda/Pictures/bot/steup.sh")
+    doc_id = upload_doc("/home/go/1080p_tt32331377.mp4")
     print(doc_id)

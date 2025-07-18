@@ -1,3 +1,5 @@
+import json
+import subprocess
 import sys
 import os
 import requests
@@ -93,6 +95,7 @@ async def main():
             for i, torrent in enumerate(chosen_torrents):
                 # Create quality-based folder structure
                 base_path = os.path.join("/tmp", data['imdb_id'])
+                data['imdb_id']= data['imdb_id'].replace("tt", "")
                 quality_folder = torrent['quality']  # 720p, 1080p, etc.
                 download_path = os.path.join(base_path, quality_folder)
                 download_path = await download_libtorrent(download_path, torrent['magnet'], data['imdb_id'])
@@ -170,33 +173,43 @@ async def main():
                 os.remove(input_file)
                 third_party_links = []
                 subtitles_links = []
-                # if torrent['quality'] == "1080p" or  i == 0:
-                #     try:
-                #         dzen_url = uploader.third.dzen.main_with_path(output_file,data['imdb_id'])
-                #         third_party_links.append(dzen_url)
-                #     except Exception as e:
-                #         print(e)
-                #         pass
-                #     try:
-                #         ok_url = uploader.third.ok.main_with_path(output_file)
-                #         third_party_links.append(ok_url)
-                #     except Exception as e:
-                #         print(e)
-                #         pass
+                if torrent['quality'] == "1080p" or  i == 0:
+                    try:
+                        dzen_url = uploader.third.dzen.main_with_path(output_file,data['imdb_id'])
+                        third_party_links.append(dzen_url)
+                    except Exception as e:
+                        print(e)
+                        pass
+                    try:
+                        ok_url = uploader.third.ok.main_with_path(output_file)
+                        third_party_links.append(ok_url)
+                    except Exception as e:
+                        print(e)
+                        pass
 
                     
 
                 break
-            
+            doc_id = None
+
             try:
-                doc_id =  uploader.doc.upload_doc(
-                    output_file,
-                    title=data['imdb_id']
-                )
+                url = 'http://193.181.211.153:3000/upload'
+                cmd = [
+                    'curl',
+                    '-X', 'POST',
+                    '-F', f'file=@{file_path}',
+                    url
+                ]
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                response_json = json.loads(result.stdout)
+                if response_json.get('success'):
+                    doc_url = response_json.get('url')
+                    doc_id = doc_url.split('/')[-1]
+
             except Exception as e:
                 print(f"DOCERROR: {e}")
                 pass
-            
+
             info = await movie_info.fetch_movie_data_by_imdb(data['imdb_id'])
             ar_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"),f"ar_{data['imdb_id']}")
             if  ar_id:
