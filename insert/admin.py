@@ -127,7 +127,7 @@ async def upload_movie(
     }
 
     cookies = {
-        'auth_token': '26a3c99ca55a006dca854cb8af4c3756cdc20c99b3f836e4b621bd78348cee07',
+        'auth_token': 'add0b66970af70d798d57e973f701a78e99fe835da256a287d5d9db2a2a6f9b5',
     }
 
     response = requests.post(
@@ -145,7 +145,7 @@ async def upload_subtitle(file_path: str, language: str = "ar") -> str:
     url = 'https://swag.halashow.com/ddtank/admin/subs'
 
     cookies = {
-        'auth_token': '26a3c99ca55a006dca854cb8af4c3756cdc20c99b3f836e4b621bd78348cee07',
+        'auth_token': 'add0b66970af70d798d57e973f701a78e99fe835da256a287d5d9db2a2a6f9b5',
     }
     headers = {
         'Accept': '*/*',

@@ -209,6 +209,7 @@ async def main():
                     url
                 ]
                 result = subprocess.run(cmd, capture_output=True, text=True)
+                print(result)
                 response_json = json.loads(result.stdout)
                 if response_json.get('success'):
                     doc_url = response_json.get('url')
