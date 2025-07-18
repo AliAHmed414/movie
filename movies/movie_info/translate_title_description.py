@@ -5,7 +5,6 @@ import json
 from google import genai
 from google.genai import types
 
-# Translate English title and description to Arabic and return as JSON
 def translate_title_description(title, description, model="gemini-2.0-flash", retries=5):
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY") or "AIzaSyCH6qbmbIamMm3ePpBD2Hjq1-HY7rojT6Q")
 
@@ -52,18 +51,28 @@ Rules:
                 config=config
             ):
                 output += chunk.text
-            # parse to ensure valid JSON
-            return json.loads(output.strip())
-        except json.JSONDecodeError:
-            # If the model added any stray text, try to extract the JSON block
-            start = output.find("{")
-            end = output.rfind("}") + 1
-            if start != -1 and end != -1:
-                try:
-                    return json.loads(output[start:end])
-                except Exception:
-                    pass
-            raise RuntimeError(f"Failed to parse JSON from response:\n{output}")
+
+            # Try to parse JSON
+            parsed = None
+            try:
+                parsed = json.loads(output.strip())
+            except json.JSONDecodeError:
+                # Extract JSON block
+                start = output.find("{")
+                end = output.rfind("}") + 1
+                if start != -1 and end != -1:
+                    try:
+                        parsed = json.loads(output[start:end])
+                    except json.JSONDecodeError:
+                        pass
+
+            # Validate parsed data
+            if isinstance(parsed, dict) and "title" in parsed and "description" in parsed:
+                return parsed
+
+            # Fallback if parsing fails
+            raise RuntimeError(f"Invalid JSON format from Gemini:\n{output}")
+
         except Exception as e:
             if "503" in str(e) or "UNAVAILABLE" in str(e):
                 wait_time = 2 ** attempt + random.uniform(0, 1)
@@ -72,15 +81,5 @@ Rules:
             else:
                 raise e
 
+    # If retries fail
     raise RuntimeError("❌ Failed to translate after multiple retries.")
-
-# Example usage
-if __name__ == "__main__":
-    english_title = "The Last Voyage of the Demeter"
-    english_description = (
-        "A terrifying journey aboard the merchant ship Demeter as it transports mysterious cargo. "
-        "Unexplained events unfold, and the crew begins to suspect an evil presence is stalking them."
-    )
-
-    result = translate_title_description(english_title, english_description)
-    print(json.dumps(result, ensure_ascii=False, indent=2))

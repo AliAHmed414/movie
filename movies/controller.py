@@ -14,8 +14,6 @@ if uploader_dir not in sys.path:
     sys.path.insert(0, uploader_dir)
 
 
-import movie_info.translate_title_description
-import uploader.doc
 import uploader.third
 import utils.subs_lang
 from yts import fetch_yts_movie
@@ -95,7 +93,7 @@ async def main():
             for i, torrent in enumerate(chosen_torrents):
                 # Create quality-based folder structure
                 base_path = os.path.join("/tmp", data['imdb_id'])
-                data['imdb_id']= data['imdb_id'].replace("tt", "")
+                # data['imdb_id']= data['imdb_id'].replace("tt", "")
                 quality_folder = torrent['quality']  # 720p, 1080p, etc.
                 download_path = os.path.join(base_path, quality_folder)
                 download_path = await download_libtorrent(download_path, torrent['magnet'], data['imdb_id'])
@@ -197,7 +195,7 @@ async def main():
                 cmd = [
                     'curl',
                     '-X', 'POST',
-                    '-F', f'file=@{file_path}',
+                    '-F', f'file=@{output_file}',
                     url
                 ]
                 result = subprocess.run(cmd, capture_output=True, text=True)
@@ -244,34 +242,40 @@ async def main():
 
 
 async def process_and_upload_movie(data,third_party_links=None,subtitles=None,doc_id=None):
-    # Step 1: Fetch movie data
-    
 
-    # Step 2: Combine title and overview (description) in en|ar format if Arabic exists
     title_en = data.get('title_en', '')
     title_ar = data.get('title_ar', '')
-    
-
     overview_en = data.get('overview_en', '')
     overview_ar = data.get('overview_ar', '')
 
+    # Collapse multiple spaces and trim before translating
+    title_en = re.sub(r"\s+", " ", title_en).strip()
+    overview_en = re.sub(r"\s+", " ", overview_en).strip()
 
-    # Collapse multiple spaces and trim
-    
+    # Fallback translation if Arabic is missing or incorrect
     if not title_ar or detect(title_ar.strip()) != "ar":
         title_description = translate_title_description(title_en, overview_en)
-        title_ar = title_description['title']
-        if not overview_ar or detect(overview_ar.strip()) != 'ar':
-            overview_ar = title_description['description']
 
+        # ✅ Ensure it's a dictionary
+        if isinstance(title_description, dict):
+            title_ar = title_description.get('title', '')
+            if not overview_ar or detect(overview_ar.strip()) != 'ar':
+                overview_ar = title_description.get('description', '')
+        else:
+            print(f"❌ Unexpected response from translate_title_description: {title_description}")
+            title_ar = title_ar or ''
+            overview_ar = overview_ar or ''
+
+    # Construct the final values
     title = f"{title_en}|{title_ar}" if title_ar else title_en
-
     description = f"{overview_en}|{overview_ar}" if overview_ar else overview_en
+
+    # Clean up final description
     description = re.sub(r"\s+", " ", description).strip()
     description = re.sub(r"[-]{2,}", " ", description)
     description = re.sub(r"[.]{2,}", " ", description)
     description = description.replace('"', '')
-    # Step 3: Merge and deduplicate genres
+        # Step 3: Merge and deduplicate genres
     genres_en = data.get('genres_en', [])
     genres_ar = data.get('genres_ar', [])
     genres = list(dict.fromkeys(genres_ar + genres_en))
