@@ -76,71 +76,79 @@ async def main():
             title = data["title"]
             print(title)
             data = await fetch_yts_movie(title)
+
+            if 'imdb_id' not in data:
+                print("❌ imdb_id not found in data")
+                return
+
             data['imdb_id'] = resolve_imdb_redirect(data['imdb_id'])
-            # Find best torrent: prioritize web over bluray
+
             web_torrents = [t for t in data.get('torrents', []) if t['codec'] == 'x264' and t['type'] == 'web']
             bluray_torrents = [t for t in data.get('torrents', []) if t['codec'] == 'x264' and t['type'] == 'bluray']
-            
-            # Choose web if available, otherwise bluray
+
             chosen_torrents = web_torrents if web_torrents else bluray_torrents
-            
+
             if not chosen_torrents:
                 print("No suitable torrents found")
                 return
-                
+
             print(f"Using {'web' if web_torrents else 'bluray'} torrents")
             translated = False
+            subs_path = None  # Define subs_path in outer scope
+
             for i, torrent in enumerate(chosen_torrents):
-                # Create quality-based folder structure
                 base_path = os.path.join("/tmp", data['imdb_id'])
-                # data['imdb_id']= data['imdb_id'].replace("tt", "")
-                quality_folder = torrent['quality']  # 720p, 1080p, etc.
+                quality_folder = torrent['quality']
                 download_path = os.path.join(base_path, quality_folder)
+
                 download_path = await download_libtorrent(download_path, torrent['magnet'], data['imdb_id'])
+
                 if not download_path:
                     requests.post(f"{api}/movie/{title}/long")
+
                 if download_path and quality_folder == "1080p":
-                    # Create subs folder in the same base directory
                     subs_path = os.path.join(base_path, "subs")
                     os.makedirs(subs_path, exist_ok=True)
-                    
+
                     subtitle_info = utils.subs_lang.detect_srt_languages(download_path, only_one_lang=True)
                     print("Detected Subtitles:", subtitle_info)
-                    
-                    
-                    # Move subtitles to subs folder with imdb-id.{lang}.srt format
+
                     for sub_info in subtitle_info:
                         sub_file = sub_info['path']
                         lang = sub_info['lang']
-                        
+
                         if sub_file.endswith('.srt'):
                             old_sub_path = sub_file
                             new_sub_name = f"{data['imdb_id']}.{lang}.srt"
                             new_sub_path = os.path.join(subs_path, new_sub_name)
-                            
+
                             if os.path.exists(old_sub_path):
                                 os.rename(old_sub_path, new_sub_path)
                                 print(f"Moved subtitle: {os.path.basename(sub_file)} -> {new_sub_name}")
-                                
-                                # Clean the subtitle file
                                 utils.subs_lang.clean_subtitle_file(new_sub_path)
-                
+
                 if not translated:
+                    if not subs_path:
+                        print("❌ subs_path is not defined. Skipping subtitles processing.")
+                        return
+
                     eng_sub = os.path.join(subs_path, f"{data['imdb_id']}.eng.srt")
                     ara_sub = os.path.join(subs_path, f"{data['imdb_id']}.ara.srt")
-                    if not  os.path.exists(eng_sub):
-                            subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
-                            response = requests.get(
-                                f"http://193.181.211.153:5050/api/subtitles",
-                                params={"url": subtitles_yts_query, "language": "english"}
+
+                    if not os.path.exists(eng_sub):
+                        subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
+                        response = requests.get(
+                            f"http://193.181.211.153:5050/api/subtitles",
+                            params={"url": subtitles_yts_query, "language": "english"}
+                        )
+                        subtitles_yts = response.json().get("subtitles", [])
+                        if subtitles_yts:
+                            yts_sub.download_and_extract_subtitle(
+                                subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.eng.srt"
                             )
-                            subtitles_yts = response.json().get("subtitles", [])
-                            if subtitles_yts:
-                                yts_sub.download_and_extract_subtitle(
-                                    subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.eng.srt"
-                                )
-                                yts_sub.fix_encoding_if_needed(eng_sub)
-                                yts_sub.clean_srt(eng_sub)
+                            yts_sub.fix_encoding_if_needed(eng_sub)
+                            yts_sub.clean_srt(eng_sub)
+
                     if os.path.exists(eng_sub) and not os.path.exists(ara_sub):
                         subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
                         response = requests.get(
@@ -149,45 +157,47 @@ async def main():
                         )
                         subtitles_yts = response.json().get("subtitles", [])
                         if subtitles_yts:
-                            yts_sub.download_and_extract_subtitle(subtitles_yts[0],save_path=subs_path,new_name=f"{data['imdb_id']}.ara.srt")
+                            yts_sub.download_and_extract_subtitle(subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.ara.srt")
                             yts_sub.fix_encoding_if_needed(ara_sub)
                             yts_sub.clean_srt(ara_sub)
                             translated = True
                         else:
                             await subtitles.translort(eng_sub, ara_sub)
                             translated = True
-    
-                soft_ubtitles=[
-                    {'file': os.path.join(subs_path, f"{data['imdb_id']}.ara.srt") ,'language':'ara', 'default': True, 'forced': True},
+
+                soft_ubtitles = [
+                    {'file': os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"), 'language': 'ara', 'default': True, 'forced': True},
                     {'file': os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"), 'language': 'eng', 'default': False, 'forced': False}
                 ]
+
                 mp4_files = glob.glob(os.path.join(download_path, "*.mp4"))
                 if not mp4_files:
                     print("❌ No MP4 file found to process.")
                     return
+
                 input_file = mp4_files[0]
                 output_file = os.path.join(download_path, f"{torrent['quality']}_{data['imdb_id']}.mp4")
-                encode.add_subtitles_and_audio_only(input_file=input_file,output_file=output_file,subtitles=soft_ubtitles,remove_metadata=True)
+                encode.add_subtitles_and_audio_only(input_file=input_file, output_file=output_file, subtitles=soft_ubtitles, remove_metadata=True)
                 os.remove(input_file)
+
                 third_party_links = []
                 subtitles_links = []
-                if torrent['quality'] == "1080p" or  i == 0:
+
+                if torrent['quality'] == "1080p" or i == 0:
                     try:
-                        dzen_url = uploader.third.dzen.main_with_path(output_file,data['imdb_id'])
+                        dzen_url = uploader.third.dzen.main_with_path(output_file, data['imdb_id'])
                         third_party_links.append(dzen_url)
                     except Exception as e:
                         print(e)
-                        pass
+
                     try:
                         ok_url = uploader.third.ok.main_with_path(output_file)
                         third_party_links.append(ok_url)
                     except Exception as e:
                         print(e)
-                        pass
-
-                    
 
                 break
+
             doc_id = None
 
             try:
@@ -206,16 +216,16 @@ async def main():
 
             except Exception as e:
                 print(f"DOCERROR: {e}")
-                pass
 
             info = await movie_info.fetch_movie_data_by_imdb(data['imdb_id'])
-            ar_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"),f"ar_{data['imdb_id']}")
-            if  ar_id:
+
+            ar_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"), f"ar_{data['imdb_id']}")
+            if ar_id:
                 subtitles_links.append(ar_id)
-            en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"),f"en_{data['imdb_id']}")
+
+            en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"), f"en_{data['imdb_id']}")
             if en_id:
                 subtitles_links.append(en_id)
-            
 
             result = await process_and_upload_movie(
                 data=info,
@@ -223,23 +233,25 @@ async def main():
                 subtitles=subtitles_links,
                 doc_id=doc_id
             )
+
         if result.get("response", {}).get("code") == 201:
             print("✅ Movie uploaded successfully")
             requests.post(f"{api}/movie/{title}")
         else:
             print(result)
+
     except:
         traceback.print_exc()
 
     finally:
-        file_path = f"/tmp/{data['imdb_id']}"
-        if file_path and os.path.exists(file_path):
-            try:
-                shutil.rmtree(file_path)
-                print(f"🧹 Cleaned up: {file_path}")
-            except Exception as cleanup_err:
-                print(f"⚠️ Failed to remove {file_path}: {cleanup_err}")
-
+        try:
+            if 'data' in locals() and 'imdb_id' in data:
+                file_path = f"/tmp/{data['imdb_id']}"
+                if os.path.exists(file_path):
+                    shutil.rmtree(file_path)
+                    print(f"🧹 Cleaned up: {file_path}")
+        except Exception as cleanup_err:
+            print(f"⚠️ Failed to remove path: {cleanup_err}")
 
 async def process_and_upload_movie(data,third_party_links=None,subtitles=None,doc_id=None):
 
