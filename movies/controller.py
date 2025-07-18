@@ -210,7 +210,6 @@ async def main():
                 ]
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 response_json = json.loads(result.stdout)
-                print(response_json)
                 if response_json.get('success'):
                     doc_url = response_json.get('url')
                     doc_id = doc_url.split('/')[-1]
@@ -337,7 +336,13 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
     poster_url = data.get('poster', '')
     backdrop_url = data.get('backdrop', '')
     trailer_url_full = data.get('trailer', '')
-    trailer_id = ''
+    trailer_id = trailer_url_full
+    if trailer_url_full :
+        # Extract video ID from YouTube URL
+        match = re.search(r"v=([A-Za-z0-9_-]+)", trailer_url_full)
+        if match:
+            trailer_id = match.group(1)
+
     # Extract video ID from YouTube URL
     match = re.search(r"v=([A-Za-z0-9_-]+)", trailer_url_full)
     if match:
