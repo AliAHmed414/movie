@@ -138,7 +138,7 @@ async def main():
                     if not os.path.exists(eng_sub):
                         subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
                         response = requests.get(
-                            f"http://193.181.211.153:5050/api/subtitles",
+                            f"http://145.223.69.43:5050/api/subtitles",
                             params={"url": subtitles_yts_query, "language": "english"}
                         )
                         subtitles_yts = response.json().get("subtitles", [])
@@ -152,7 +152,7 @@ async def main():
                     if os.path.exists(eng_sub) and not os.path.exists(ara_sub):
                         subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
                         response = requests.get(
-                            f"http://193.181.211.153:5050/api/subtitles",
+                            f"http://145.223.69.43:5050/api/subtitles",
                             params={"url": subtitles_yts_query, "language": "english"}
                         )
                         subtitles_yts = response.json().get("subtitles", [])
@@ -337,16 +337,16 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
     backdrop_url = data.get('backdrop', '')
     trailer_url_full = data.get('trailer', '')
     trailer_id = trailer_url_full
-    if trailer_url_full :
-        # Extract video ID from YouTube URL
-        match = re.search(r"v=([A-Za-z0-9_-]+)", trailer_url_full)
-        if match:
-            trailer_id = match.group(1)
+    # if trailer_url_full :
+    #     # Extract video ID from YouTube URL
+    #     match = re.search(r"v=([A-Za-z0-9_-]+)", trailer_url_full)
+    #     if match:
+    #         trailer_id = match.group(1)
 
-    # Extract video ID from YouTube URL
-    match = re.search(r"v=([A-Za-z0-9_-]+)", trailer_url_full)
-    if match:
-        trailer_id = match.group(1)
+    # # Extract video ID from YouTube URL
+    # match = re.search(r"v=([A-Za-z0-9_-]+)", trailer_url_full)
+    # if match:
+    #     trailer_id = match.group(1)
 
     logo_url = data.get('logo', '')
     if data.get("age_rating") == "" or not data.get("age_rating"):
