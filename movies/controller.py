@@ -33,7 +33,7 @@ import yts.sub  as yts_sub
 from langdetect import detect
 from movie_info.translate_title_description import translate_title_description
 import traceback
-
+from uploader import media
 
 def resolve_imdb_redirect(imdb_id: str) -> str:
     url = f"https://www.imdb.com/title/{imdb_id}/"
@@ -198,24 +198,24 @@ async def main():
 
                 break
 
-            doc_id = None
+            # doc_id = None
 
-            try:
-                url = 'http://193.181.211.153:3000/upload'
-                cmd = [
-                    'curl',
-                    '-X', 'POST',
-                    '-F', f'file=@{output_file}',
-                    url
-                ]
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                response_json = json.loads(result.stdout)
-                if response_json.get('success'):
-                    doc_url = response_json.get('url')
-                    doc_id = doc_url.split('/')[-1]
+            # try:
+            #     url = 'http://193.181.211.153:3000/upload'
+            #     cmd = [
+            #         'curl',
+            #         '-X', 'POST',
+            #         '-F', f'file=@{output_file}',
+            #         url
+            #     ]
+            #     result = subprocess.run(cmd, capture_output=True, text=True)
+            #     response_json = json.loads(result.stdout)
+            #     if response_json.get('success'):
+            #         doc_url = response_json.get('url')
+            #         doc_id = doc_url.split('/')[-1]
 
-            except Exception as e:
-                print(f"DOCERROR: {e}")
+            # except Exception as e:
+            #     print(f"DOCERROR: {e}")
 
             info = await movie_info.fetch_movie_data_by_imdb(data['imdb_id'])
 
@@ -226,6 +226,33 @@ async def main():
             en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"), f"en_{data['imdb_id']}")
             if en_id:
                 subtitles_links.append(en_id)
+            doc_id = None
+            try:
+                # Get file size in GB and add 1GB buffer for space requirement
+                file_size_bytes = os.path.getsize(output_file)
+                file_size_gb = file_size_bytes / (1024 ** 3)  # Convert bytes to GB
+                required_space = max(3, int(file_size_gb + 1))  # Minimum 3GB or file size + 1GB buffer (rounded up)
+                
+                print(f"📁 File size: {file_size_gb:.2f} GB, requesting {required_space} GB space")
+                
+                mediafire = requests.get(f"http://47.237.25.164:9090/mediafire/with_space?space={required_space}")
+                mediafire.raise_for_status()  # Raise exception for HTTP errors
+                
+                mediafire_data = mediafire.json()
+                cookie = mediafire_data["cookie"]
+                
+                doc_id = media.upload_to_mediafire(output_file, cookie)
+                print(f"✅ MediaFire upload successful: {doc_id}")
+                
+            except requests.exceptions.RequestException as e:
+                print(f"❌ MediaFire API request failed: {e}")
+            except KeyError as e:
+                print(f"❌ MediaFire response missing key: {e}")
+            except FileNotFoundError:
+                print(f"❌ Output file not found: {output_file}")
+            except Exception as e:
+                print(f"❌ MediaFire upload failed: {e}")
+                print("⚠️ Continuing without MediaFire upload...")
 
             result = await process_and_upload_movie(
                 data=info,
@@ -378,14 +405,14 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
         'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': ''
     }],
     'free_download_links': [{
-        'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': ''
+        'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': doc_id if doc_id else ''
     }],
     'free_third_party_links': third_party_links or [''],
     'paid_video_sources': [{
         'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': '', 'url_2160p': '', 'url_4320p': ''
     }],
     'paid_download_links': [{
-        'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p': doc_id if doc_id else ''
+        'url_360p': '', 'url_480p': '', 'url_720p': '', 'url_1080p':  ''
     }],
     'paid_third_party_links': [''],
 }
