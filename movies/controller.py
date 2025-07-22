@@ -240,9 +240,19 @@ async def main():
                 
                 mediafire_data = mediafire.json()
                 cookie = mediafire_data["cookie"]
+                entry_id = mediafire_data["id"]
                 
-                doc_id = media.upload_to_mediafire(output_file, cookie)
+                doc_id, free_space = media.upload_to_mediafire(output_file, cookie)
+                
+                # Update free space on server
+                update_response = requests.put(
+                    f"http://47.237.25.164:9090/mediafire/{entry_id}/free_space",
+                    json={"free_space": free_space}
+                )
+                update_response.raise_for_status()
+                
                 print(f"✅ MediaFire upload successful: {doc_id}")
+                print(f"📊 Updated free space: {free_space} GB")
                 
             except requests.exceptions.RequestException as e:
                 print(f"❌ MediaFire API request failed: {e}")

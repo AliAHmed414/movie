@@ -54,6 +54,37 @@ def upload_file(file_path, session_token):
     else:
         raise Exception(f"Upload failed: {response.get('message', 'Unknown error')}")
 
+def get_free_space(session_token):
+    """Get available free space from MediaFire account"""
+    r = requests.post('https://www.mediafire.com/api/1.5/user/get_info.php',
+                      data={'response_format': 'json', 'session_token': session_token})
+    
+    if r.status_code != 200:
+        raise Exception("❌ Failed to get user info")
+    
+    response = r.json()['response']
+    if response['result'] != 'Success':
+        raise Exception(f"❌ API error: {response.get('message', 'Unknown error')}")
+    
+    user_info = response['user_info']
+    used_space = int(user_info['used_storage_size'])
+    total_space = int(user_info['storage_limit'])
+    free_space = total_space - used_space
+    
+    # Convert bytes to human readable format
+    def format_bytes(bytes_val):
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if bytes_val < 1024.0:
+                return f"{bytes_val:.2f} {unit}"
+            bytes_val /= 1024.0
+        return f"{bytes_val:.2f} PB"
+    
+    print(f"💾 Storage Info:")
+    print(f"   Used: {format_bytes(used_space)}")
+    print(f"   Total: {format_bytes(total_space)}")
+    print(f"   Free: {format_bytes(free_space)}")
+    
+    return int(total_space) 
 def get_quickkey_from_upload(filename, session_token, upload_time_threshold=30):
     time.sleep(3)
 
@@ -93,11 +124,12 @@ def upload_to_mediafire(file_path, cookie_string):
     print("✅ Upload complete, fetching link...")
 
     quickkey, url = get_quickkey_from_upload(filename, session_token)
+    free_space = get_free_space(session_token)
     print(f"\n✅ Upload successful!")
     print(f"📁 File: {filename}")
     print(f"🔑 QuickKey: {quickkey}")
     print(f"🔗 Download URL: {url}")
-    return quickkey
+    return quickkey, free_space
 
 # CLI entry
 if __name__ == "__main__":

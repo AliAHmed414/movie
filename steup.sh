@@ -6,7 +6,7 @@ sudo apt --fix-broken install
 sudo apt upgrade -y
 
 echo "📦 Installing core system tools..."
-sudo apt install -y python3 python3-pip ffmpeg libffi-dev libssl-dev build-essential python3-libtorrent git python3-pip
+sudo apt install -y python3 python3-pip ffmpeg libffi-dev libssl-dev build-essential python3-libtorrent git python3-pip unzip
  
 # echo "🌐 Installing Microsoft Edge..."
 # curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
@@ -31,6 +31,7 @@ pip3 install --break-system-packages Flask aiohttp langdetect undetected_chromed
 echo "🧠 Installing Google Generative AI SDK..."
 pip3 install --break-system-packages -q -U google-genai
 
+echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc && source ~/.bashrc
 echo "✅ All dependencies installed!"
 echo "🎞️  ffmpeg version: $(ffmpeg -version | head -n 1)"
 echo "🧲 libtorrent version: $(python3 -c 'import libtorrent as lt; print(lt.version)' 2>/dev/null || echo "libtorrent not found")"
