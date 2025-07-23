@@ -179,7 +179,7 @@ async def main():
 
                 input_file = mp4_files[0]
                 random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-                output_file = os.path.join(download_path, f"{random_string}_{torrent['quality']}_{data['imdb_id'].replace("tt","")}.mp4")
+                output_file = os.path.join(download_path, f"{random_string}_{torrent['quality']}_{data['imdb_id'].replace('tt','')}.mp4")
                 encode.add_subtitles_and_audio_only(input_file=input_file, output_file=output_file, subtitles=soft_subtitles, remove_metadata=True)
                 os.remove(input_file)
 
