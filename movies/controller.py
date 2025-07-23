@@ -188,7 +188,7 @@ async def main():
 
                 if torrent['quality'] == "1080p" or i == 0:
                     try:
-                        dzen_url = uploader.third.dzen.main_with_path(output_file, data['imdb_id'])
+                        dzen_url = uploader.third.dzen.main_with_path(output_file, f"{random_string}_{torrent['quality']}_{data['imdb_id'].replace('tt','')}.mp4")
                         third_party_links.append(dzen_url)
                     except Exception as e:
                         print(e)
