@@ -179,8 +179,7 @@ async def main():
 
                 input_file = mp4_files[0]
                 random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-
-                output_file = os.path.join(download_path, f"_{torrent['quality']}_{data['imdb_id'].replace('tt', '')}.mp4")
+                output_file = os.path.join(download_path, f"{torrent['quality']}_{random_string}.mp4")
                 encode.add_subtitles_and_audio_only(input_file=input_file, output_file=output_file, subtitles=soft_ubtitles, remove_metadata=True)
                 os.remove(input_file)
 
@@ -256,7 +255,7 @@ async def main():
                 update_response.raise_for_status()
                 
                 print(f"✅ MediaFire upload successful: {doc_id}")
-                print(f"📊 Updated free space: {free_space} GB")
+                print(f"📊 Updated free space: {free_space / (1024**3):.2f} GB")
                 
             except requests.exceptions.RequestException as e:
                 print(f"❌ MediaFire API request failed: {e}")
@@ -373,7 +372,7 @@ async def process_and_upload_movie(data,third_party_links=None,subtitles=None,do
     
     # Step 5: Other fields
     duration = data.get('runtime', 0)
-    release_year = int(data.get('release_date', '')[:4] or 0)
+    release_year = int(data.get('release_date', '')[:4] or 2030)
     poster_url = data.get('poster', '')
     backdrop_url = data.get('backdrop', '')
     trailer_url_full = data.get('trailer', '')
