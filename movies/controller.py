@@ -6,7 +6,8 @@ import requests
 import glob
 import shutil
 import re
-
+import random
+import string
 script_dir = os.path.dirname(os.path.abspath(__file__))
 uploader_dir = os.path.dirname(script_dir)
 
@@ -82,7 +83,7 @@ async def main():
                 return
 
             data['imdb_id'] = resolve_imdb_redirect(data['imdb_id'])
-            data['imdb_id']  = data['imdb_id'].replace("tt", "")
+            
 
             web_torrents = [t for t in data.get('torrents', []) if t['codec'] == 'x264' and t['type'] == 'web']
             bluray_torrents = [t for t in data.get('torrents', []) if t['codec'] == 'x264' and t['type'] == 'bluray']
@@ -177,7 +178,9 @@ async def main():
                     return
 
                 input_file = mp4_files[0]
-                output_file = os.path.join(download_path, f"{torrent['quality']}_{data['imdb_id']}.mp4")
+                random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+
+                output_file = os.path.join(download_path, f"_{torrent['quality']}_{data['imdb_id'].replace('tt', '')}.mp4")
                 encode.add_subtitles_and_audio_only(input_file=input_file, output_file=output_file, subtitles=soft_ubtitles, remove_metadata=True)
                 os.remove(input_file)
 
