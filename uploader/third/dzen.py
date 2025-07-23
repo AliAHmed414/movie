@@ -11,7 +11,7 @@ import re
 
 def setup_driver():
     options = uc.ChromeOptions()
-    # options.add_argument("--headless=new")  # Use new headless mode for recent versions
+    options.add_argument("--headless=new")  # Use new headless mode for recent versions
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -124,7 +124,7 @@ def main_with_path(video_path, title="Uploaded Video"):
         driver.quit()
 
 def main():
-    return main_with_path("/home/kda/Dune - Duke's last breath [Dd9F5P_pUnc].mp4", "Comssedy Video")
+    return main_with_path("/home/kda/file.mp4", "Comssedy Video")
 
 if __name__ == "__main__":
     result = main()
