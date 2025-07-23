@@ -4,6 +4,8 @@ import random
 import json
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
+load_dotenv()
 
 def translate_title_description(title, description, model="gemini-2.0-flash", retries=5):
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))

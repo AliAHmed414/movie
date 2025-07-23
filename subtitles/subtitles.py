@@ -4,6 +4,8 @@ import random
 import chardet
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
+load_dotenv()
 
 # Load and detect encoding of SRT file
 async def load_srt_file(file_path):
