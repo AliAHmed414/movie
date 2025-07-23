@@ -4,6 +4,8 @@ import os
 import sys
 import time
 import datetime
+import subprocess
+import json
 
 def parse_cookie_string(cookie_str):
     return {pair.split('=')[0]: '='.join(pair.split('=')[1:]) for pair in cookie_str.split('; ')}
@@ -43,16 +45,29 @@ def upload_file(file_path, session_token):
         raise FileNotFoundError(f"File not found: {file_path}")
 
     token = get_action_token(session_token)
-    with open(file_path, 'rb') as f:
-        r = requests.post(
-            f'https://www.mediafire.com/api/1.5/upload/simple.php?session_token={session_token}&action_token={token}&response_format=json',
-            files={'file': f}
-        )
-    response = r.json()['response']
+    print(token)
+    
+    import subprocess
+    import json
+    
+    curl_command = [
+        'curl',
+        '-X', 'POST',
+        f'https://www.mediafire.com/api/1.5/upload/simple.php?session_token={session_token}&action_token={token}&response_format=json',
+        '-F', f'file=@{file_path}'
+    ]
+    
+    result = subprocess.run(curl_command, capture_output=True, text=True)
+    
+    if result.returncode != 0:
+        raise Exception(f"Curl command failed: {result.stderr}")
+    
+    response = json.loads(result.stdout)['response']
     if response['result'] == 'Success':
         return response['doupload']['key']
     else:
         raise Exception(f"Upload failed: {response.get('message', 'Unknown error')}")
+
 
 def get_free_space(session_token):
     """Get available free space from MediaFire account"""
