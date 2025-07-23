@@ -167,7 +167,7 @@ async def main():
                             await subtitles.translort(eng_sub, ara_sub)
                             translated = True
 
-                soft_ubtitles = [
+                soft_subtitles = [
                     {'file': os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"), 'language': 'ara', 'default': True, 'forced': True},
                     {'file': os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"), 'language': 'eng', 'default': False, 'forced': False}
                 ]
@@ -179,8 +179,8 @@ async def main():
 
                 input_file = mp4_files[0]
                 random_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-                output_file = os.path.join(download_path, f"{torrent['quality']}_{random_string}.mp4")
-                encode.add_subtitles_and_audio_only(input_file=input_file, output_file=output_file, subtitles=soft_ubtitles, remove_metadata=True)
+                output_file = os.path.join(download_path, f"{random_string}_{torrent['quality']}_{data['imdb_id'].replace("tt","")}.mp4")
+                encode.add_subtitles_and_audio_only(input_file=input_file, output_file=output_file, subtitles=soft_subtitles, remove_metadata=True)
                 os.remove(input_file)
 
                 third_party_links = []
