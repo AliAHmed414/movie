@@ -16,6 +16,7 @@ sudo apt install -y python3 python3-pip ffmpeg libffi-dev libssl-dev build-essen
 # sudo apt install -y microsoft-edge-stable
 
 
+ 
 
 echo "🌍 Installing Google Chrome..."
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
@@ -26,7 +27,7 @@ pip3 install --upgrade pip
 
 pip3 install --break-system-packages  git+https://github.com/ratoaq2/cleanit.git
 
-pip3 install --break-system-packages Flask aiohttp langdetect undetected_chromedriver selenium libtorrent subliminal babelfish
+pip3 install --break-system-packages Flask aiohttp langdetect undetected_chromedriver selenium libtorrent subliminal babelfish python-dotenv
 
 echo "🧠 Installing Google Generative AI SDK..."
 pip3 install --break-system-packages -q -U google-genai

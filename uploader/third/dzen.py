@@ -11,7 +11,7 @@ import re
 
 def setup_driver():
     options = uc.ChromeOptions()
-    options.add_argument("--headless=new")  # Use new headless mode for recent versions
+    # options.add_argument("--headless=new")  # Use new headless mode for recent versions
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -28,7 +28,7 @@ def setup_driver():
 
 def apply_cookies(driver):
     cookie_string = '''
-    HgGedof=1; zencookie=7531797071752581269; zen_sso_checked=1; Session_id=noauth:1752581271; sessar=1.1204.CiDmMfadzG-6eQL9nPlZtaynZYTeiAdB3jA34Gq9taugfg.2tSWBAahKjSBntrBqUTkfQ-Vi41_T9Jt4DPYb51BEvo; yandex_login=; yandexuid=6610916351752581271; mda2_beacon=1752581271613; zen_vk_sso_checked=1; zen_session_id=Mrfsnv6IDZ4xlKg5M5E18ekq6Q8wvCGoog8.1752581273137; _yasc=nR7KKZ56msTkT57bMPXPI7/PXJk/KAtRsC34q7tr3FulibCt543cviv/mLceVRDYRFI=; Zen-User-Data={%22zen-theme%22:%22light%22%2C%22zen-theme-setting%22:%22light%22}; is_auth_through_phone=true; is_online_stat=false; stable_city=0; has_stable_city=true; zen_gid=11485; zen_vk_gid=84; one_day_socdem=+; zen_ms_socdem_pixels=2495135%2C3212781%2C3212787; crookie=thepB5ZcciB+w35i9e4fm8ObluZNu6UseEzz23QTKyLPfcYWn+hbv4R30Y7ovbe6wWpTPPKDyTJiq3Oca9VRa1OYcFs=; cmtchd=MTc1MjU4MTI3OTAxMg==; news_cryproxy_sync_ok=1; cryproxy_sync_ok=1
+    zencookie=5676573621744273232; _yasc=lFP9uRKOFaO9Ms0WTRpOEiyNlRDtugZ2YtykFRQ+tXJU/KoDAW4dKP0hfx5iN8BE2/AI; yandex_login=asadmoahmed405@gmail.com; yandexuid=9624868961753132085; mda2_beacon=1753232750028; Zen-User-Data={%22zen-theme%22:%22light%22%2C%22zen-theme-setting%22:%22light%22}; rec-tech=true; addruid=z1e74V4r2d7Et32A5a3g4C8ut0; editor-poll-times-shown=2; stable_city=2; zen_gid=11485; zen_vk_gid=84; HgGedof=1; zen_session_id=CKARuO9Tm9L7exXv5fDwwl1MGHs7n3gnDSC.1753132331604; Session_id=3:1753232750.5…B_2Pk6RCnXTWg5djX9KcEoJ90INlV5nZeEZcA.1Qh7bJ9TnZSSdmQKAAYUlnH36N5hgykvYA_HzRLh9VU; has_stable_city=true; zen_ms_socdem_pixels=2495139%2C3212785%2C3212791; cmtchd=MTc1MzEzMjMzOTQ5Mg==; crookie=6r1IkEx8oJiwEEe/qeJR14XaYvkdafzhYstSkaz79N74hPZTtFXKkzyMMM0xGrJc4/LfYDl0vFAy/YJ4PIeaeFz5omg=; news_cryproxy_sync_ok=1; cryproxy_sync_ok=1; zen_sso_checked=1; ys=udn.cDp6eGU%3D#c_chck.148314140; sso_status=sso.passport.yandex.ru:synchronized; zen_has_vk_auth_after_sso=1; is_auth_through_phone=true; is_online_stat=false
     '''
     for part in cookie_string.strip().split("; "):
         try:
@@ -66,7 +66,7 @@ def login_and_upload(driver, video_path, title="Comedy Video"):
     apply_cookies(driver)
     time.sleep(1)  
     # Navigate and upload
-    driver.get("https://dzen.ru/profile/editor/id/67fe5ca67c0c2872e1590bec/publications?state=published")
+    driver.get("https://dzen.ru/profile/editor/id/687635ef8effd56439915091/publications?state=published")
     time.sleep(2)
     
     # Close modals
@@ -124,7 +124,7 @@ def main_with_path(video_path, title="Uploaded Video"):
         driver.quit()
 
 def main():
-    return main_with_path("/workspaces/codespaces-blank/big_buck_bunny_720p_1mb.mp4", "Comssedy Video")
+    return main_with_path("/home/kda/Dune - Duke's last breath [Dd9F5P_pUnc].mp4", "Comssedy Video")
 
 if __name__ == "__main__":
     result = main()

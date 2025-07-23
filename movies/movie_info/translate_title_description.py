@@ -11,26 +11,17 @@ def translate_title_description(title, description, model="gemini-2.0-flash", re
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
     prompt = f"""
-You are a professional movie translator.
+Translate ONLY the following movie title and description from English to Arabic.
 
-Translate the following **movie title** and **description** from English to Arabic.
+Title: {title}
+Description: {description}
 
-🎬 Title:
-{title}
+Return ONLY a JSON object with the Arabic translations. Do not include examples or multiple movies.
 
-📝 Description:
-{description}
-
-Rules:
-- Make the Arabic translation sound natural and culturally suitable.
-- The title should feel like an official Arabic movie title (avoid literal translation if unnatural).
-- The description should be fluent, readable, and engaging in Arabic.
-- Do NOT include any English in the response.
-- **Output JSON only**, in this exact format:
-
+Format:
 {{
-  "title": "<Arabic title here>",
-  "description": "<Arabic description here>"
+  "title": "Arabic title here",
+  "description": "Arabic description here"
 }}
 """
 
@@ -54,26 +45,38 @@ Rules:
             ):
                 output += chunk.text
 
+            # Clean and validate output
+            output = output.strip()
+            if not output:
+                raise RuntimeError("Empty response from Gemini")
+            
             # Try to parse JSON
             parsed = None
             try:
-                parsed = json.loads(output.strip())
+                parsed = json.loads(output)
             except json.JSONDecodeError:
-                # Extract JSON block
+                # Try to extract JSON block if wrapped in text
                 start = output.find("{")
                 end = output.rfind("}") + 1
-                if start != -1 and end != -1:
+                if start != -1 and end > start:
                     try:
                         parsed = json.loads(output[start:end])
                     except json.JSONDecodeError:
+                        # Check if response was truncated
+                        if output.endswith('},') or output.endswith('},{'):
+                            raise RuntimeError(f"Response appears truncated from Gemini:\n{output}")
                         pass
 
+            # Handle both single object and array responses
+            if isinstance(parsed, list) and len(parsed) > 0:
+                parsed = parsed[0]  # Take first item if array
+            
             # Validate parsed data
             if isinstance(parsed, dict) and "title" in parsed and "description" in parsed:
                 return parsed
 
             # Fallback if parsing fails
-            raise RuntimeError(f"Invalid JSON format from Gemini:\n{output}")
+            raise RuntimeError(f"Invalid JSON format from Gemini:\n{output[:500]}...")
 
         except Exception as e:
             if "503" in str(e) or "UNAVAILABLE" in str(e):
