@@ -69,8 +69,62 @@ def main_with_path(video_path):
         if not file_input: raise Exception("File input not found")
         
         file_input.send_keys(video_path)
-        print("✓ Video uploaded")
-        time.sleep(10)
+        print("📤 Upload started...")
+        
+        # Monitor upload progress
+        upload_complete = False
+        max_wait_time = 300  # 5 minutes max wait
+        start_time = time.time()
+        
+        while not upload_complete and (time.time() - start_time) < max_wait_time:
+            try:
+                # Check for different status messages
+                status_elements = driver.find_elements(By.CSS_SELECTOR, ".video-uploader_status-tx")
+                
+                for status_el in status_elements:
+                    if not status_el.is_displayed():
+                        continue
+                        
+                    status_text = status_el.text.strip()
+                    
+                    if "Queued for download" in status_text:
+                        print("⏳ Queued for processing...")
+                    elif "Uploaded" in status_text and "%" in status_text:
+                        # Extract percentage
+                        try:
+                            percent_el = status_el.find_element(By.CSS_SELECTOR, ".v-upl-card_pb_count")
+                            percentage = percent_el.text.strip()
+                            print(f"📤 Uploading: {percentage}%")
+                        except:
+                            print("📤 Uploading...")
+                    elif "Video uploaded and ready for publication" in status_text:
+                        print("✓ Video uploaded")
+                        upload_complete = True
+                        break
+                    elif "Video published" in status_text:
+                        print("✓ Video published")
+                        upload_complete = True
+                        break
+                    elif "No connection to the Internet" in status_text:
+                        print("❌ Connection error detected")
+                        raise Exception("Internet connection lost")
+                    elif status_el.get_attribute("class") and "js-uploader-error" in status_el.get_attribute("class"):
+                        error_text = status_text if status_text else "Unknown upload error"
+                        print(f"❌ Upload error: {error_text}")
+                        raise Exception(f"Upload failed: {error_text}")
+                
+                if not upload_complete:
+                    time.sleep(2)  # Check every 2 seconds
+                    
+            except Exception as e:
+                if "Upload failed" in str(e) or "Connection error" in str(e):
+                    raise e
+                # Continue on other exceptions (element not found, etc.)
+                time.sleep(2)
+        
+        if not upload_complete:
+            print("⚠️ Upload status unclear, proceeding...")
+            time.sleep(5)
         
         # Publish
         if not find_click(driver, [".js-uploader-publish-link", ".publish-btn", "[data-l*='publish']"], 30):
