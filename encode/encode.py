@@ -357,7 +357,7 @@ def create_multi_resolution_videos(input_file, output_dir, base_filename=None, c
     return created_files
 
 
-def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, subtitles=None, remove_metadata=False):
+def add_subtitles_and_audio_only(input_file, output_file, audio_tracks=None, subtitles=None, remove_metadata=True):
     """
     Add only subtitles and audio tracks to video without any other processing.
 

@@ -99,7 +99,7 @@ def get_free_space(session_token):
     print(f"   Total: {format_bytes(total_space)}")
     print(f"   Free: {format_bytes(free_space)}")
     
-    return int(total_space) 
+    return int(free_space) 
 def get_quickkey_from_upload(filename, session_token, upload_time_threshold=30):
     time.sleep(3)
 

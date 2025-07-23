@@ -82,6 +82,7 @@ async def main():
                 return
 
             data['imdb_id'] = resolve_imdb_redirect(data['imdb_id'])
+            data['imdb_id']  = data['imdb_id'].replace("tt", "")
 
             web_torrents = [t for t in data.get('torrents', []) if t['codec'] == 'x264' and t['type'] == 'web']
             bluray_torrents = [t for t in data.get('torrents', []) if t['codec'] == 'x264' and t['type'] == 'bluray']

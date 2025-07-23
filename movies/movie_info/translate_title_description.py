@@ -6,7 +6,7 @@ from google import genai
 from google.genai import types
 
 def translate_title_description(title, description, model="gemini-2.0-flash", retries=5):
-    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY") or "AIzaSyCH6qbmbIamMm3ePpBD2Hjq1-HY7rojT6Q")
+    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
     prompt = f"""
 You are a professional movie translator.
