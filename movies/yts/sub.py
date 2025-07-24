@@ -52,6 +52,7 @@ def fetch_subtitles(url, language="arabic"):
                     arabic_links.append(final_url)
 
     return arabic_links
+    
 def download_and_extract_subtitle(url: str, save_path: str, new_name: str = "subtitle.srt"):
     os.makedirs(save_path, exist_ok=True)
     filename = url.split("/")[-1]

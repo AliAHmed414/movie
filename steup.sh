@@ -27,7 +27,7 @@ pip3 install --upgrade pip
 
 pip3 install --break-system-packages  git+https://github.com/ratoaq2/cleanit.git
 
-pip3 install --break-system-packages Flask aiohttp langdetect undetected_chromedriver selenium libtorrent subliminal babelfish python-dotenv
+pip3 install --break-system-packages Flask aiohttp langdetect undetected_chromedriver selenium libtorrent subliminal babelfish python-dotenv cloudscraper
 
 echo "🧠 Installing Google Generative AI SDK..."
 pip3 install --break-system-packages -q -U google-genai

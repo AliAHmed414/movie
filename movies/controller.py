@@ -137,35 +137,77 @@ async def main():
                     eng_sub = os.path.join(subs_path, f"{data['imdb_id']}.eng.srt")
                     ara_sub = os.path.join(subs_path, f"{data['imdb_id']}.ara.srt")
 
+                    # Enhanced English subtitle processing
                     if not os.path.exists(eng_sub):
+                        print(f"🔍 Fetching English subtitles for {data['imdb_id']}...")
                         subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
-                        response = requests.get(
-                            f"http://145.223.69.43:5050/api/subtitles",
-                            params={"url": subtitles_yts_query, "language": "english"}
-                        )
-                        subtitles_yts = response.json().get("subtitles", [])
-                        if subtitles_yts:
-                            yts_sub.download_and_extract_subtitle(
-                                subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.eng.srt"
-                            )
-                            yts_sub.fix_encoding_if_needed(eng_sub)
-                            yts_sub.clean_srt(eng_sub)
+                        
+                        try:
+                            subtitles_yts = yts_sub.fetch_subtitles(subtitles_yts_query) 
+                            if subtitles_yts:
+                                print(f"✅ Found {len(subtitles_yts)} English subtitle(s)")
+                                yts_sub.download_and_extract_subtitle(
+                                    subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.eng.srt"
+                                )
+                                
+                                # Post-processing with error handling
+                                if os.path.exists(eng_sub):
+                                    yts_sub.fix_encoding_if_needed(eng_sub)
+                                    yts_sub.clean_srt(eng_sub)
+                                    print("✅ English subtitle processed successfully")
+                                else:
+                                    print("❌ English subtitle file not found after download")
+                            else:
+                                print("❌ No English subtitles found on YTS")
+                        except Exception as e:
+                            print(f"❌ Error fetching English subtitles: {e}")
 
+                    # Enhanced Arabic subtitle processing
                     if os.path.exists(eng_sub) and not os.path.exists(ara_sub):
-                        subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
-                        response = requests.get(
-                            f"http://145.223.69.43:5050/api/subtitles",
-                            params={"url": subtitles_yts_query, "language": "english"}
-                        )
-                        subtitles_yts = response.json().get("subtitles", [])
-                        if subtitles_yts:
-                            yts_sub.download_and_extract_subtitle(subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.ara.srt")
-                            yts_sub.fix_encoding_if_needed(ara_sub)
-                            yts_sub.clean_srt(ara_sub)
-                            translated = True
-                        else:
-                            await subtitles.translort(eng_sub, ara_sub)
-                            translated = True
+                        print(f"🔍 Processing Arabic subtitles for {data['imdb_id']}...")
+                        
+                        # Try to fetch Arabic subtitles from YTS first
+                        try:
+                            subtitles_yts_query = f"https://yifysubtitles.ch/movie-imdb/{data['imdb_id']}"
+                            subtitles_yts = yts_sub.fetch_subtitles(subtitles_yts_query, language="arabic")
+                            
+                            if subtitles_yts:
+                                print(f"✅ Found {len(subtitles_yts)} Arabic subtitle(s) on YTS")
+                                yts_sub.download_and_extract_subtitle(
+                                    subtitles_yts[0], save_path=subs_path, new_name=f"{data['imdb_id']}.ara.srt"
+                                )
+                                
+                                # Post-processing with error handling
+                                if os.path.exists(ara_sub):
+                                    yts_sub.fix_encoding_if_needed(ara_sub)
+                                    yts_sub.clean_srt(ara_sub)
+                                    yts_sub.remove_blocks_with_phrase(ara_sub, "ترجمة")  # Remove translator credits
+                                    print("✅ Arabic subtitle from YTS processed successfully")
+                                    translated = True
+                                else:
+                                    print("❌ Arabic subtitle file not found after YTS download")
+                                    raise Exception("YTS Arabic subtitle download failed")
+                            else:
+                                print("ℹ️ No Arabic subtitles found on YTS, falling back to translation")
+                                raise Exception("No Arabic subtitles on YTS")
+                                
+                        except Exception as yts_error:
+                            print(f"⚠️ YTS Arabic subtitle failed: {yts_error}")
+                            print("🔄 Falling back to translation service...")
+                            
+                            try:
+                                await subtitles.translort(eng_sub, ara_sub)
+                                if os.path.exists(ara_sub):
+                                    print("✅ Arabic subtitle translated successfully")
+                                    translated = True
+                                else:
+                                    print("❌ Translation service failed to create Arabic subtitle")
+                            except Exception as trans_error:
+                                print(f"❌ Translation service error: {trans_error}")
+                                print("⚠️ Continuing without Arabic subtitles...")
+                    
+                    elif not os.path.exists(eng_sub):
+                        print("⚠️ No English subtitle available for Arabic processing")
 
                 soft_subtitles = [
                     {'file': os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"), 'language': 'ara', 'default': True, 'forced': True},
