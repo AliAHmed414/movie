@@ -20,6 +20,22 @@ def setup_driver():
     # Match the major version of your installed Chrome
     return uc.Chrome(options=options)
 
+def apply_cookies(driver):
+    cookie_string = '''
+    _statid=01365bdc-fbd8-43eb-badb-844efefc810a; bci=-4749589668578836287; __last_online=1753281524789; __dzbd=false; klos=0; _userIds="910160417777,910080290458"; _sAuth910080290458=YVoMCdxmRuvfPrUUFlqjAUXdtKqajNjTGYLyzQNm3Fs__DCv5pG57x0DTcFC8RDBLgOFRUEhfJEM3hAyiCfT8-3GTWPLY8jph9JbUY8mLHIYUhGbbnWIAztxO9qRUNAFVYp5hCwIEJPGT-z8UA_5; AUTHCODE=YVoMCdxmRuvfPrUUFlqjAUXdtKqajNjTGYLyzQNm3Fs__DCv5pG57x0DTcFC8RDBLgOFRUEhfJEM3hAyiCfT8-3GTWPLY8jph9JbUY8mLHIYUhGbbnWIAztxO9qRUNAFVYp5hCwIEJPGT-z8UA_5; msg_conf=24685557567925…eme_mode=DARK; vdt=FUc8gCiQJHfRHFOhvVIao2EUK+ZTd25UuyoSHnZwhAoAAABmC4a4MMmoXetAy+jx6J8h2M0uAggT0dnZB2A+sq4uz2k9T3+VWfPp8r8+zlpoyMpXZoYHxVFnmkgEXkZQww1SjqyqUKcgHFEdNC5hiqKlO71S8v0bFUxhvfl2GLv1FwkluPxTH7Q=; cudr=0; JSESSIONID=aa32ebdb0be67a46c4161b818a694acb2aa9a47d3e420288.4789b9ba; LASTSRV=ok.ru; viewport=1080; TZD=6.588; TZ=6; TD=588; CDN=; _sAuth910160417777=BZTrPGSJgfmcinxSnbXafZxi4F7IsyhkR5fLDlX5V6KeNH-5OrxoD8slAxOU28_Y1_q6SNG78ZhofR2DkZyBST0_fCMduYL8528NspLD-wptT-VGLEideENCdr2B8sUHyq2IfaeDynoNlmeyTA_5
+    '''
+    for part in cookie_string.strip().split("; "):
+        try:
+            name, value = part.split("=", 1)
+            driver.add_cookie({
+                "name": name,
+                "value": value,
+                "domain": ".ok.ru",
+                "path": "/"
+            })
+        except Exception as e:
+            print(f"Could not add cookie {name}: {e}")
+
 def safe_click(driver, element):
     for method in [lambda: element.click(), lambda: driver.execute_script("arguments[0].click();", element)]:
         try: method(); return True
@@ -44,15 +60,10 @@ def main_with_path(video_path):
     try:
         # Login
         driver.get("https://ok.ru")
-        for cookie in [{"name": "userIds", "value": "910080290458", "domain": ".ok.ru"}, 
-                      {"name": "sAuth910080290458", "value": "W0OalXzzGSTMYE623O2bRNBqEjut_0jldPNDtOsozTMXv7wBsTq1ft3G7bDlvhZCTY6aXfCIVzESNJxKtjIRvZwVJ-V8soWcSUauEMVB8X-BEpPBsHaiHEyicYAYPhtjpQuw0Q4Lknjj7XtZpw_5", "domain": ".ok.ru"},
-                      {"name": "AUTHCODE", "value": "d3Zmm2jcUVteEJ72_QfPmPnOOOJ17K9TZiNYFzmMz37-xUPrvBS6U5GGYa8QQjsquBQX1JiMFKSuEp8IBY5ml3sxmPn5qjIbVGVB7uWw2atHhkpZjGGvu7QR9xvmoWbmhKDy6Hm2ZV_7SAdggA_5", "domain": ".ok.ru"},
-                      {"name": "JSESSIONID", "value": "b22052da389727beb77cf6274b7b4019c1f42812331b34af.38e859c5", "domain": ".ok.ru"}]:
-            driver.add_cookie(cookie)
-        
-        # Upload
+        time.sleep(1)  # Wait for the page to load
+        apply_cookies(driver)
+        time.sleep(1)  
         driver.get("https://ok.ru/video/manager")
-        time.sleep(3)
         
         file_input = None
         for selector in ["input[type='file']", "input[accept*='video']", ".js-uploader-input input[type='file']"]:
@@ -73,10 +84,9 @@ def main_with_path(video_path):
         
         # Monitor upload progress
         upload_complete = False
-        max_wait_time = 300  # 5 minutes max wait
         start_time = time.time()
         
-        while not upload_complete and (time.time() - start_time) < max_wait_time:
+        while not upload_complete:
             try:
                 # Check for different status messages
                 status_elements = driver.find_elements(By.CSS_SELECTOR, ".video-uploader_status-tx")
@@ -120,7 +130,7 @@ def main_with_path(video_path):
                 if "Upload failed" in str(e) or "Connection error" in str(e):
                     raise e
                 # Continue on other exceptions (element not found, etc.)
-                time.sleep(2)
+                time.sleep(1)
         
         if not upload_complete:
             print("⚠️ Upload status unclear, proceeding...")
@@ -185,7 +195,7 @@ def main_with_path(video_path):
 
 def main():
     """Original main function for backward compatibility"""
-    video_path = "/workspaces/codespaces-blank/big_buck_bunny_720p_1mb.mp4"
+    video_path = "/home/kda/comdy.mp4"
     return main_with_path(video_path)
 
 if __name__ == "__main__": 
