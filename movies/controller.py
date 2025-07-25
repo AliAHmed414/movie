@@ -35,6 +35,7 @@ from langdetect import detect
 from movie_info.translate_title_description import translate_title_description
 import traceback
 from uploader import media
+import time
 
 def resolve_imdb_redirect(imdb_id: str) -> str:
     url = f"https://www.imdb.com/title/{imdb_id}/"
@@ -240,6 +241,8 @@ async def main():
                     except Exception as e:
                         print(e)
                     try:
+                        subprocess.run(["pkill", "-f", "chrome"])
+                        time.sleep(3)
                         dzen_url = uploader.third.dzen.main_with_path(output_file, f"{random_string}_{torrent['quality']}_{data['imdb_id'].replace('tt','')}.mp4")
                         third_party_links.append(dzen_url)
                     except Exception as e:

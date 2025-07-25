@@ -17,7 +17,9 @@ def setup_driver():
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-software-rasterizer")
     options.add_argument("--window-size=1920,1080")
-    options.add_argument(f"--remote-debugging-port={9222 + os.getpid() % 1000}") 
+    options.add_argument("--disable-web-security")
+    options.add_argument("--disable-features=VizDisplayCompositor")
+    # Remove the remote debugging port to avoid conflicts
     options.add_experimental_option("prefs", {
         "profile.default_content_setting_values.notifications": 2
     })
