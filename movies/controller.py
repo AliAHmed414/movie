@@ -209,10 +209,15 @@ async def main():
                     elif not os.path.exists(eng_sub):
                         print("⚠️ No English subtitle available for Arabic processing")
 
-                soft_subtitles = [
-                    {'file': os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"), 'language': 'ara', 'default': True, 'forced': True},
-                    {'file': os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"), 'language': 'eng', 'default': False, 'forced': False}
-                ]
+                soft_subtitles = []
+                
+                ara_sub_path = os.path.join(subs_path, f"{data['imdb_id']}.ara.srt")
+                if os.path.exists(ara_sub_path):
+                    soft_subtitles.append({'file': ara_sub_path, 'language': 'ara', 'default': True, 'forced': True})
+                
+                eng_sub_path = os.path.join(subs_path, f"{data['imdb_id']}.eng.srt")
+                if os.path.exists(eng_sub_path):
+                    soft_subtitles.append({'file': eng_sub_path, 'language': 'eng', 'default': False, 'forced': False})
 
                 mp4_files = glob.glob(os.path.join(download_path, "*.mp4"))
                 if not mp4_files:
@@ -263,11 +268,15 @@ async def main():
 
             info = await movie_info.fetch_movie_data_by_imdb(data['imdb_id'])
 
-            ar_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.ara.srt"), f"ar_{data['imdb_id']}")
+            ara_sub_file = os.path.join(subs_path, f"{data['imdb_id']}.ara.srt")
+            if os.path.exists(ara_sub_file):
+                ar_id = await upload_subtitle(ara_sub_file, f"ar_{data['imdb_id']}")
             if ar_id:
                 subtitles_links.append(ar_id)
 
-            en_id = await upload_subtitle(os.path.join(subs_path, f"{data['imdb_id']}.eng.srt"), f"en_{data['imdb_id']}")
+            eng_sub_file = os.path.join(subs_path, f"{data['imdb_id']}.eng.srt")
+            if os.path.exists(eng_sub_file):
+                en_id = await upload_subtitle(eng_sub_file, f"en_{data['imdb_id']}")
             if en_id:
                 subtitles_links.append(en_id)
             doc_id = None
