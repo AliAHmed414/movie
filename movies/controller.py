@@ -275,14 +275,14 @@ async def main():
             ara_sub_file = os.path.join(subs_path, f"{data['imdb_id']}.ara.srt")
             if os.path.exists(ara_sub_file):
                 ar_id = await upload_subtitle(ara_sub_file, f"ar_{data['imdb_id']}")
-            if ar_id:
-                subtitles_links.append(ar_id)
+                if ar_id:
+                    subtitles_links.append(ar_id)
 
             eng_sub_file = os.path.join(subs_path, f"{data['imdb_id']}.eng.srt")
             if os.path.exists(eng_sub_file):
                 en_id = await upload_subtitle(eng_sub_file, f"en_{data['imdb_id']}")
-            if en_id:
-                subtitles_links.append(en_id)
+                if en_id:
+                    subtitles_links.append(en_id)
             doc_id = None
             try:
                 # Get file size in GB and add 1GB buffer for space requirement
