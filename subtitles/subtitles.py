@@ -145,7 +145,9 @@ def translate_batch(blocks, api_url):
     
     raise RuntimeError("Max retries exceeded")
 
-async def translort(input_path, output_path, batch_size=15, api_url="http://193.181.211.153:5000/api/text"):
+async def translort(input_path, output_path, batch_size=15, api_url=""):
+    sub_port = os.getenv("SUB_PORT")
+    api_url = f"http://193.181.211.153:{sub_port}/api/text"
     srt_content = await load_srt_file(input_path)
     blocks = srt_content.strip().split("\n\n")
     total_blocks = len(blocks)
