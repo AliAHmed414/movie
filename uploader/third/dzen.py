@@ -29,9 +29,12 @@ def setup_driver():
 
 
 def apply_cookies(driver):
+    cookie = os.getenv("DZEN")
     cookie_string = '''
     zencookie=5676573621744273232; _yasc=lFP9uRKOFaO9Ms0WTRpOEiyNlRDtugZ2YtykFRQ+tXJU/KoDAW4dKP0hfx5iN8BE2/AI; yandex_login=asadmoahmed405@gmail.com; yandexuid=9624868961753132085; mda2_beacon=1753232750028; Zen-User-Data={%22zen-theme%22:%22light%22%2C%22zen-theme-setting%22:%22light%22}; rec-tech=true; addruid=z1e74V4r2d7Et32A5a3g4C8ut0; editor-poll-times-shown=2; stable_city=2; zen_gid=11485; zen_vk_gid=84; HgGedof=1; zen_session_id=CKARuO9Tm9L7exXv5fDwwl1MGHs7n3gnDSC.1753132331604; Session_id=3:1753232750.5…B_2Pk6RCnXTWg5djX9KcEoJ90INlV5nZeEZcA.1Qh7bJ9TnZSSdmQKAAYUlnH36N5hgykvYA_HzRLh9VU; has_stable_city=true; zen_ms_socdem_pixels=2495139%2C3212785%2C3212791; cmtchd=MTc1MzEzMjMzOTQ5Mg==; crookie=6r1IkEx8oJiwEEe/qeJR14XaYvkdafzhYstSkaz79N74hPZTtFXKkzyMMM0xGrJc4/LfYDl0vFAy/YJ4PIeaeFz5omg=; news_cryproxy_sync_ok=1; cryproxy_sync_ok=1; zen_sso_checked=1; ys=udn.cDp6eGU%3D#c_chck.148314140; sso_status=sso.passport.yandex.ru:synchronized; zen_has_vk_auth_after_sso=1; is_auth_through_phone=true; is_online_stat=false
     '''
+    if cookie:
+        cookie_string = cookie
     for part in cookie_string.strip().split("; "):
         try:
             name, value = part.split("=", 1)

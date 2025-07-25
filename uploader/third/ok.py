@@ -3,6 +3,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time, os, re
+from dotenv import load_dotenv
+load_dotenv()
 
 def setup_driver():
     options = uc.ChromeOptions()
@@ -15,9 +17,13 @@ def setup_driver():
     return uc.Chrome(options=options)
 
 def apply_cookies(driver):
+    cookie = os.getenv("OK")
     cookie_string = '''
     _statid=01365bdc-fbd8-43eb-badb-844efefc810a; bci=-4749589668578836287; __last_online=1753404052619; __dzbd=false; klos=0; _userIds="910160417777,910080290458"; _sAuth910080290458=XmZL7JeLBXOL1H6q4depZQ4GbP3e_rI_tTeFCJrkhOSzGjwxxQccE5or49Grs5WIvar5DgvVQQXV68UoA6KKNBEZYp1s_ybDKCVFDmDt-p2nK2GottoxBQHSribxBzp96B8hEaImbmLxpO-TMA_5; AUTHCODE=XmZL7JeLBXOL1H6q4depZQ4GbP3e_rI_tTeFCJrkhOSzGjwxxQccE5or49Grs5WIvar5DgvVQQXV68UoA6KKNBEZYp1s_ybDKCVFDmDt-p2nK2GottoxBQHSribxBzp96B8hEaImbmLxpO-TMA_5; msg_conf=24685557567925…eme_mode=DARK; vdt=FUc8gCiQJHfRHFOhvVIao2EUK+ZTd25UuyoSHnZwhAoAAABmC4a4MMmoXetAy+jx6J8h2M0uAggT0dnZB2A+sq4uz2k9T3+VWfPp8r8+zlpoyMpXZoYHxVFnmkgEXkZQww1SjqyqUKcgHFEdNC5hiqKlO71S8v0bFUxhvfl2GLv1FwkluPxTH7Q=; cudr=0; _sAuth910160417777=BZTrPGSJgfmcinxSnbXafZxi4F7IsyhkR5fLDlX5V6KeNH-5OrxoD8slAxOU28_Y1_q6SNG78ZhofR2DkZyBST0_fCMduYL8528NspLD-wptT-VGLEideENCdr2B8sUHyq2IfaeDynoNlmeyTA_5; JSESSIONID=b0c1a3eeb7afab8eb1a8949c1aa545643707f534a84989cd.7d99b795; LASTSRV=ok.ru; viewport=1080; TZD=6.941; TZ=6; TD=941; CDN=
      '''
+    if cookie:
+        cookie_string = cookie
+        
     for part in cookie_string.strip().split("; "):
         try:
             name, value = part.split("=", 1)
