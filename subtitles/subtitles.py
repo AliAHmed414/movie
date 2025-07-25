@@ -90,7 +90,7 @@ def translate_batch(blocks, api_url):
 
 {chr(10).join(blocks)}"""
     
-    max_retries = 10
+    max_retries = 6
     base_wait_time = 30
     
     for attempt in range(max_retries):
