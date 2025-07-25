@@ -11,13 +11,13 @@ import re
 
 def setup_driver():
     options = uc.ChromeOptions()
-    options.add_argument("--headless=new")  # Use new headless mode for recent versions
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
     options.add_argument("--disable-software-rasterizer")
     options.add_argument("--window-size=1920,1080")
-    options.add_argument(f"--remote-debugging-port=0") 
+    options.add_argument(f"--remote-debugging-port={9222 + os.getpid() % 1000}") 
     options.add_experimental_option("prefs", {
         "profile.default_content_setting_values.notifications": 2
     })
