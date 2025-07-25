@@ -70,8 +70,11 @@ def login_and_upload(driver, video_path, title="Comedy Video"):
     time.sleep(1)  # Wait for the page to load
     apply_cookies(driver)
     time.sleep(1)  
+    dzen_id = "687635ef8effd56439915091"
+    if os.getenv("DZEN_ID"):
+        dzen_id = os.getenv("DZEN_ID")
     # Navigate and upload
-    driver.get("https://dzen.ru/profile/editor/id/687635ef8effd56439915091/publications?state=published")
+    driver.get("https://dzen.ru/profile/editor/id//publications?state=published")
     time.sleep(2)
     
     # Close modals
