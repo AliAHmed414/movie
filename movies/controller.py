@@ -284,42 +284,51 @@ async def main():
                 if en_id:
                     subtitles_links.append(en_id)
             doc_id = None
-            try:
-                # Get file size in GB and add 1GB buffer for space requirement
-                file_size_bytes = os.path.getsize(output_file)
-                file_size_gb = file_size_bytes / (1024 ** 3)  # Convert bytes to GB
-                required_space = max(3, int(file_size_gb + 1))  # Minimum 3GB or file size + 1GB buffer (rounded up)
+            max_attempts = 2
+            for attempt in range(max_attempts):
+                try:
+                    # Get file size in GB and add 1GB buffer for space requirement
+                    file_size_bytes = os.path.getsize(output_file)
+                    file_size_gb = file_size_bytes / (1024 ** 3)  # Convert bytes to GB
+                    required_space = max(3, int(file_size_gb + 1))  # Minimum 3GB or file size + 1GB buffer (rounded up)
                 
-                print(f"📁 File size: {file_size_gb:.2f} GB, requesting {required_space} GB space")
+                    print(f"📁 File size: {file_size_gb:.2f} GB, requesting {required_space} GB space (Attempt {attempt + 1}/{max_attempts})")
+                    
+                    mediafire = requests.get(f"http://47.237.25.164:9090/mediafire/with_space?space={required_space}")
+                    mediafire.raise_for_status()  # Raise exception for HTTP errors
+                    
+                    mediafire_data = mediafire.json()
+                    cookie = mediafire_data["cookie"]
+                    entry_id = mediafire_data["id"]
+                    
+                    doc_id, free_space = media.upload_to_mediafire(output_file, cookie)
+                    free_space = int(free_space / (1024**3))
+                    # Update free space on server
+                    update_response = requests.put(
+                        f"http://47.237.25.164:9090/mediafire/{entry_id}/free_space",
+                        json={"free_space": free_space}
+                    )
+                    update_response.raise_for_status()
+                    
+                    print(f"✅ MediaFire upload successful: {doc_id}")
+                    print(f"📊 Updated free space: {free_space} GB")
+                    break  # Success, exit the retry loop
                 
-                mediafire = requests.get(f"http://47.237.25.164:9090/mediafire/with_space?space={required_space}")
-                mediafire.raise_for_status()  # Raise exception for HTTP errors
-                
-                mediafire_data = mediafire.json()
-                cookie = mediafire_data["cookie"]
-                entry_id = mediafire_data["id"]
-                
-                doc_id, free_space = media.upload_to_mediafire(output_file, cookie)
-                free_space = int(free_space / (1024**3))
-                # Update free space on server
-                update_response = requests.put(
-                    f"http://47.237.25.164:9090/mediafire/{entry_id}/free_space",
-                    json={"free_space": free_space}
-                )
-                update_response.raise_for_status()
-                
-                print(f"✅ MediaFire upload successful: {doc_id}")
-                print(f"📊 Updated free space: {free_space} GB")
-                
-            except requests.exceptions.RequestException as e:
-                print(f"❌ MediaFire API request failed: {e}")
-            except KeyError as e:
-                print(f"❌ MediaFire response missing key: {e}")
-            except FileNotFoundError:
-                print(f"❌ Output file not found: {output_file}")
-            except Exception as e:
-                print(f"❌ MediaFire upload failed: {e}")
-                print("⚠️ Continuing without MediaFire upload...")
+                except requests.exceptions.RequestException as e:
+                    print(f"❌ MediaFire API request failed (Attempt {attempt + 1}/{max_attempts}): {e}")
+                    if attempt == max_attempts - 1:
+                        print("⚠️ All MediaFire upload attempts failed, continuing without MediaFire upload...")
+                except KeyError as e:
+                    print(f"❌ MediaFire response missing key (Attempt {attempt + 1}/{max_attempts}): {e}")
+                    if attempt == max_attempts - 1:
+                        print("⚠️ All MediaFire upload attempts failed, continuing without MediaFire upload...")
+                except FileNotFoundError:
+                    print(f"❌ Output file not found: {output_file}")
+                    break  # No point retrying if file doesn't exist
+                except Exception as e:
+                    print(f"❌ MediaFire upload failed (Attempt {attempt + 1}/{max_attempts}): {e}")
+                    if attempt == max_attempts - 1:
+                        print("⚠️ All MediaFire upload attempts failed, continuing without MediaFire upload...")
 
             result = await process_and_upload_movie(
                 data=info,
