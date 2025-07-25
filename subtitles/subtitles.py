@@ -91,20 +91,18 @@ def translate_batch(blocks, api_url):
 {chr(10).join(blocks)}"""
     
     max_retries = 6
-    base_wait_time = 30
     
     for attempt in range(max_retries):
         try:
-            response = requests.post(api_url, headers=headers, json={"text": prompt, "tab": 1}, timeout=60)
+            response = requests.post(api_url, headers=headers, json={"text": prompt, "tab": 1}, timeout=30)
             
             if response.status_code == 200:
                 try:
                     result = response.json()
                     # Check if API returned available: false in success response
                     if result.get("available") == False:
-                        wait_time = base_wait_time * (attempt + 1)
-                        print(f"🚫 API not available (attempt {attempt + 1}/{max_retries}). Waiting {wait_time}s...")
-                        time.sleep(wait_time)
+                        print(f"🚫 API not available (attempt {attempt + 1}/{max_retries}). Quick retry...")
+                        time.sleep(2)
                         continue
                     
                     translated_text = result.get("received_text", response.text)
@@ -118,32 +116,30 @@ def translate_batch(blocks, api_url):
                 try:
                     error_data = response.json()
                     if error_data.get("available") == False:
-                        wait_time = base_wait_time * (attempt + 1)
-                        print(f"🚫 API not available (attempt {attempt + 1}/{max_retries}). Waiting {wait_time}s...")
-                        time.sleep(wait_time)
+                        print(f"🚫 API not available (attempt {attempt + 1}/{max_retries}). Quick retry...")
+                        time.sleep(2)
                         continue
                 except json.JSONDecodeError:
                     pass
-                raise RuntimeError(f"Server error: {response.text}")
+                print(f"❌ Server error (attempt {attempt + 1}/{max_retries}): {response.text}")
+                time.sleep(1)
             else:
-                raise RuntimeError(f"HTTP {response.status_code}: {response.text}")
+                print(f"❌ HTTP {response.status_code} (attempt {attempt + 1}/{max_retries}): {response.text}")
+                time.sleep(1)
                 
         except requests.exceptions.Timeout:
-            wait_time = 5 * (attempt + 1)
-            print(f"⏰ Timeout (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
-            time.sleep(wait_time)
+            print(f"⏰ Timeout (attempt {attempt + 1}/{max_retries}). Quick retry...")
+            time.sleep(1)
         except requests.exceptions.ConnectionError:
-            wait_time = 5 * (attempt + 1)
-            print(f"🔌 Connection error (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
-            time.sleep(wait_time)
+            print(f"🔌 Connection error (attempt {attempt + 1}/{max_retries}). Quick retry...")
+            time.sleep(1)
         except Exception as e:
-            if attempt == max_retries - 1:
-                raise e
-            wait_time = 5 * (attempt + 1)
-            print(f"❌ Error: {e} (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
-            time.sleep(wait_time)
+            print(f"❌ Error: {e} (attempt {attempt + 1}/{max_retries}). Quick retry...")
+            time.sleep(1)
     
-    raise RuntimeError("Max retries exceeded")
+    # Return None instead of raising error - let caller handle skipping
+    print(f"⏭️ Skipping batch after {max_retries} failed attempts")
+    return None
 
 async def translort(input_path, output_path, batch_size=15, api_url=""):
     sub_port = os.getenv("SUB_PORT")
@@ -166,6 +162,11 @@ async def translort(input_path, output_path, batch_size=15, api_url=""):
         try:
             result = translate_batch(batch, api_url)
             
+            # Skip if batch failed after all retries
+            if result is None:
+                print(f"⏭️ Skipping batch {i//batch_size + 1}")
+                continue
+            
             with open(output_path, "a", encoding="utf-8") as f:
                 for block in result:
                     if block.strip():
@@ -173,9 +174,6 @@ async def translort(input_path, output_path, batch_size=15, api_url=""):
                         
         except Exception as e:
             print(f"❌ Failed batch {i//batch_size + 1}: {e}")
-            if "not available" in str(e).lower():
-                print("🚫 API server not available.")
-                return
             continue
     
     print(f"✅ Translation completed! Output: {output_path}")
