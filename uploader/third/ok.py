@@ -6,18 +6,12 @@ import time, os, re
 
 def setup_driver():
     options = uc.ChromeOptions()
-    options.add_argument("--headless=new")  # Use new headless mode for recent versions
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")
     options.add_argument("--window-size=1920,1080")
-    options.add_argument(f"--remote-debugging-port=0") 
-    options.add_experimental_option("prefs", {
-        "profile.default_content_setting_values.notifications": 2
-    })
-
-    # Match the major version of your installed Chrome
+    options.add_experimental_option("prefs", {"profile.default_content_setting_values.notifications": 2})
     return uc.Chrome(options=options)
 
 def apply_cookies(driver):
@@ -117,151 +111,57 @@ def main_with_path(video_path):
         print("📤 Upload started...")
         
         # Monitor upload progress
-        upload_complete = False
         start_time = time.time()
-        timeout = 1800  # 30 minutes timeout
-        last_status = ""
-        no_status_count = 0
+        timeout = 1800  # 30 minutes
+        no_status_warnings = 0
+        max_warnings = 5
         
-        while not upload_complete and (time.time() - start_time) < timeout:
+        while (time.time() - start_time) < timeout:
             try:
-                # Look for specific upload progress indicators
-                current_status = ""
-                found_status = False
-                
-                # Check for percentage in upload progress
-                try:
-                    # Look for percentage indicators
-                    percent_elements = driver.find_elements(By.CSS_SELECTOR, "[class*='pb_count'], [class*='percent']")
-                    for percent_el in percent_elements:
-                        if percent_el.is_displayed():
-                            percent_text = percent_el.text.strip()
-                            if "%" in percent_text:
-                                current_status = f"Uploaded {percent_text}"
-                                found_status = True
-                                break
-                except:
-                    pass
-                
-                # If no percentage found, look for other specific status messages
-                if not found_status:
+                # Check for publish button (upload complete)
+                for selector in [".js-uploader-publish-link", ".publish-btn", "[data-l*='publish']", "a.video-uploader_ac"]:
                     try:
-                        status_selectors = [
-                            ".video-uploader_status-tx",
-                            ".v-upl-card_status"
-                        ]
-                        
-                        for selector in status_selectors:
-                            status_elements = driver.find_elements(By.CSS_SELECTOR, selector)
-                            for status_el in status_elements:
-                                if status_el.is_displayed():
-                                    status_text = status_el.text.strip()
-                                    # Only capture relevant status messages
-                                    if any(keyword in status_text.lower() for keyword in [
-                                        "uploaded", "uploading", "processing", "queued", 
-                                        "ready", "complete", "загружен", "обработка"
-                                    ]) and len(status_text) < 100:  # Avoid capturing large page content
-                                        current_status = status_text
-                                        found_status = True
-                                        break
-                            if found_status:
-                                break
-                    except:
-                        pass
-                
-                # Check for publish button availability (indicates upload complete)
-                publish_selectors = [
-                    ".js-uploader-publish-link", 
-                    ".publish-btn", 
-                    "[data-l*='publish']",
-                    "a.video-uploader_ac"
-                ]
-                publish_available = False
-                for selector in publish_selectors:
-                    try:
-                        pub_btn = driver.find_element(By.CSS_SELECTOR, selector)
-                        if pub_btn.is_displayed() and pub_btn.is_enabled():
-                            publish_available = True
-                            print("✓ Upload complete - publish button available")
+                        btn = driver.find_element(By.CSS_SELECTOR, selector)
+                        if btn.is_displayed() and btn.is_enabled():
+                            print("✓ Upload complete")
                             break
-                    except:
-                        continue
-                
-                if publish_available:
-                    upload_complete = True
-                    break
-                
-                # Print status if it changed
-                if current_status and current_status != last_status:
-                    print(f"📤 Status: {current_status}")
-                    last_status = current_status
-                    no_status_count = 0
-                elif not found_status:
-                    no_status_count += 1
-                
-                # Check for completion keywords
-                completion_keywords = [
-                    "uploaded and ready",
-                    "ready for publication", 
-                    "video published",
-                    "upload complete",
-                    "processing complete",
-                    "готов к публикации"
-                ]
-                
-                if current_status and any(keyword in current_status.lower() for keyword in completion_keywords):
-                    print("✓ Video upload completed")
-                    upload_complete = True
-                    break
-                
-                # Check for error keywords
-                error_keywords = [
-                    "error",
-                    "failed",
-                    "no connection",
-                    "upload interrupted",
-                    "ошибка"
-                ]
-                
-                if current_status and any(keyword in current_status.lower() for keyword in error_keywords):
-                    print(f"❌ Upload error detected: {current_status}")
-                    raise Exception(f"Upload failed: {current_status}")
-                
-                # If no status found for too long, check if upload might be complete
-                if no_status_count > 20:  # No status for over a minute (20 * 3 seconds)
-                    print(f"⚠️ No status detected for {no_status_count * 3}s, checking if upload completed...")
+                    except: continue
+                else:
+                    # Check for status/progress
+                    status = ""
+                    for selector in ["[class*='pb_count']", "[class*='percent']", ".video-uploader_status-tx"]:
+                        try:
+                            elements = driver.find_elements(By.CSS_SELECTOR, selector)
+                            for el in elements:
+                                if el.is_displayed():
+                                    text = el.text.strip()
+                                    if text and ("%" in text or any(k in text.lower() for k in ["upload", "process", "ready"])):
+                                        if text != status:
+                                            print(f"📤 {text}")
+                                            status = text
+                                        break
+                        except: pass
                     
-                    # Check if we're still on the upload page or moved somewhere else
-                    if "video/manager" not in driver.current_url:
-                        print("⚠️ Page changed, assuming upload completed")
-                        upload_complete = True
-                        break
+                    if not status:
+                        no_status_warnings += 1
+                        if no_status_warnings <= max_warnings:
+                            print(f"⚠️ No status detected, checking... ({no_status_warnings}/{max_warnings})")
+                        elif no_status_warnings == max_warnings + 1:
+                            print("⚠️ Continuing silently...")
+                        
+                        if no_status_warnings > 40:  # ~2 minutes without status
+                            print("⚠️ Assuming upload completed")
+                            break
+                    else:
+                        no_status_warnings = 0
                     
-                    # Check if there are any upload-related elements still visible
-                    upload_indicators = driver.find_elements(By.CSS_SELECTOR, "[class*='upload'], [class*='progress']")
-                    active_uploads = [el for el in upload_indicators if el.is_displayed()]
-                    
-                    if not active_uploads:
-                        print("⚠️ No active upload indicators found, assuming completed")
-                        upload_complete = True
-                        break
-                
-                time.sleep(3)  # Check every 3 seconds
-                    
+                    time.sleep(3)
+                    continue
+                break
             except Exception as e:
-                if "Upload failed" in str(e) or "error detected" in str(e):
+                if "failed" in str(e).lower():
                     raise e
-                # Continue on other exceptions (element not found, etc.)
-                print(f"⚠️ Exception during status check: {e}")
                 time.sleep(2)
-        
-        if not upload_complete:
-            elapsed = time.time() - start_time
-            if elapsed >= timeout:
-                print(f"⚠️ Upload timeout after {timeout/60:.1f} minutes, proceeding anyway...")
-            else:
-                print("⚠️ Upload status unclear, proceeding...")
-            time.sleep(5)
         
         # Publish
         if not find_click(driver, [".js-uploader-publish-link", ".publish-btn", "[data-l*='publish']"], 30):
