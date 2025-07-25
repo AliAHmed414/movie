@@ -197,16 +197,16 @@ async def main():
                             print(f"⚠️ YTS Arabic subtitle failed: {yts_error}")
                             print("🔄 Falling back to translation service...")
                             
-                            try:
-                                await subtitles.translort(eng_sub, ara_sub)
-                                if os.path.exists(ara_sub):
-                                    print("✅ Arabic subtitle translated successfully")
-                                    translated = True
-                                else:
-                                    print("❌ Translation service failed to create Arabic subtitle")
-                            except Exception as trans_error:
-                                print(f"❌ Translation service error: {trans_error}")
-                                print("⚠️ Continuing without Arabic subtitles...")
+                            # try:
+                            #     await subtitles.translort(eng_sub, ara_sub)
+                            #     if os.path.exists(ara_sub):
+                            #         print("✅ Arabic subtitle translated successfully")
+                            #         translated = True
+                            #     else:
+                            #         print("❌ Translation service failed to create Arabic subtitle")
+                            # except Exception as trans_error:
+                            #     print(f"❌ Translation service error: {trans_error}")
+                            #     print("⚠️ Continuing without Arabic subtitles...")
                     
                     elif not os.path.exists(eng_sub):
                         print("⚠️ No English subtitle available for Arabic processing")
