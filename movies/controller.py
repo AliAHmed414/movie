@@ -237,15 +237,15 @@ async def main():
 
                 if torrent['quality'] == "1080p" or i == 0:
                     try:
-                        ok_url = uploader.third.ok.main_with_path(output_file)
-                        third_party_links.append(ok_url)
+                        # subprocess.run(["pkill", "-f", "chrome"])
+                        # time.sleep(3)
+                        dzen_url = uploader.third.dzen.main_with_path(output_file, f"{random_string}_{data['imdb_id'].replace('tt','')}.mp4")
+                        third_party_links.append(dzen_url)
                     except Exception as e:
                         print(e)
                     try:
-                        subprocess.run(["pkill", "-f", "chrome"])
-                        time.sleep(3)
-                        dzen_url = uploader.third.dzen.main_with_path(output_file, f"{random_string}_{data['imdb_id'].replace('tt','')}.mp4")
-                        third_party_links.append(dzen_url)
+                        ok_url = uploader.third.ok.main_with_path(output_file)
+                        third_party_links.append(ok_url)
                     except Exception as e:
                         print(e)
 
