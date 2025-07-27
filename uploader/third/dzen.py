@@ -75,8 +75,8 @@ def login_and_upload(driver, video_path, title="Comedy Video"):
     dzen_id = "687635ef8effd56439915091"
     if os.getenv("DZEN_ID"):
         dzen_id = os.getenv("DZEN_ID")
-    # Navigate and upload
-    driver.get("https://dzen.ru/profile/editor/id//publications?state=published")
+    # Navigate and upload - Fixed URL construction
+    driver.get(f"https://dzen.ru/profile/editor/id/{dzen_id}/publications?state=published")
     time.sleep(2)
     
     # Close modals
@@ -111,6 +111,7 @@ def login_and_upload(driver, video_path, title="Comedy Video"):
     except: print("Could not set title")
 
     url = driver.current_url
+    video_id = None
     if "videoEditorPublicationId=" in url:
         video_id = url.split("videoEditorPublicationId=")[1].split("&")[0]
     
@@ -134,7 +135,7 @@ def main_with_path(video_path, title="Uploaded Video"):
         driver.quit()
 
 def main():
-    return main_with_path("/home/kda/file.mp4", "Comssedy Video")
+    return main_with_path("/home/kda/comdy.mp4", "Comssedy Video")
 
 if __name__ == "__main__":
     result = main()
