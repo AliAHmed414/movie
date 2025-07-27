@@ -8,6 +8,8 @@ from selenium.webdriver.common.keys import Keys
 import time
 import os
 import re
+from dotenv import load_dotenv
+load_dotenv()
 
 def setup_driver():
     options = uc.ChromeOptions()
