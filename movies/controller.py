@@ -316,7 +316,24 @@ async def main():
                 
                 except requests.exceptions.RequestException as e:
                     print(f"❌ MediaFire API request failed (Attempt {attempt + 1}/{max_attempts}): {e}")
-                    if attempt == max_attempts - 1:
+                    if attempt < max_attempts - 1:  # Only retry if not the last attempt
+                        print("🔄 Getting new MediaFire cookie...")
+                        try:
+                            new_cookie = uploader.get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
+                            if new_cookie:
+                                # Update the server with the new cookie
+                                cookie_update_response = requests.put(
+                                    f"http://47.237.25.164:9090/mediafire/{entry_id}/cookie",
+                                    headers={"Content-Type": "application/json"},
+                                    json={"cookie": new_cookie}
+                                )
+                                cookie_update_response.raise_for_status()
+                                print("✅ Updated server with new MediaFire cookie")
+                            else:
+                                print("❌ Failed to get new MediaFire cookie")
+                        except Exception as cookie_error:
+                            print(f"❌ Error updating MediaFire cookie: {cookie_error}")
+                    else:
                         print("⚠️ All MediaFire upload attempts failed, continuing without MediaFire upload...")
                 except KeyError as e:
                     print(f"❌ MediaFire response missing key (Attempt {attempt + 1}/{max_attempts}): {e}")
@@ -327,7 +344,24 @@ async def main():
                     break  # No point retrying if file doesn't exist
                 except Exception as e:
                     print(f"❌ MediaFire upload failed (Attempt {attempt + 1}/{max_attempts}): {e}")
-                    if attempt == max_attempts - 1:
+                    if attempt < max_attempts - 1:  # Only retry if not the last attempt
+                        print("🔄 Getting new MediaFire cookie...")
+                        try:
+                            new_cookie = uploader.get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
+                            if new_cookie:
+                                # Update the server with the new cookie
+                                cookie_update_response = requests.put(
+                                    f"http://47.237.25.164:9090/mediafire/{entry_id}/cookie",
+                                    headers={"Content-Type": "application/json"},
+                                    json={"cookie": new_cookie}
+                                )
+                                cookie_update_response.raise_for_status()
+                                print("✅ Updated server with new MediaFire cookie")
+                            else:
+                                print("❌ Failed to get new MediaFire cookie")
+                        except Exception as cookie_error:
+                            print(f"❌ Error updating MediaFire cookie: {cookie_error}")
+                    else:
                         print("⚠️ All MediaFire upload attempts failed, continuing without MediaFire upload...")
 
             result = await process_and_upload_movie(
