@@ -36,6 +36,7 @@ from movie_info.translate_title_description import translate_title_description
 import traceback
 from uploader import media
 import time 
+from uploader.get_mediafire_cookie import get_mediafire_cookie
 
 
 def resolve_imdb_redirect(imdb_id: str) -> str:
@@ -319,7 +320,7 @@ async def main():
                     if attempt < max_attempts - 1:  # Only retry if not the last attempt
                         print("🔄 Getting new MediaFire cookie...")
                         try:
-                            new_cookie = uploader.get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
+                            new_cookie = get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
                             if new_cookie:
                                 # Update the server with the new cookie
                                 cookie_update_response = requests.put(
@@ -347,7 +348,7 @@ async def main():
                     if attempt < max_attempts - 1:  # Only retry if not the last attempt
                         print("🔄 Getting new MediaFire cookie...")
                         try:
-                            new_cookie = uploader.get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
+                            new_cookie = get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
                             if new_cookie:
                                 # Update the server with the new cookie
                                 cookie_update_response = requests.put(

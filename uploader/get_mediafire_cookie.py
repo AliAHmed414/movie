@@ -23,11 +23,8 @@ def get_mediafire_cookie(email, password):
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
-        options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/115 Safari/537.36")
 
         driver = uc.Chrome(
-            driver_executable_path="/home/kda/ok/chromedriver-linux64/chromedriver",
-            version_main=137,
             options=options
         )
 
