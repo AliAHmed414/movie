@@ -286,6 +286,10 @@ async def main():
                     subtitles_links.append(en_id)
             doc_id = None
             max_attempts = 2
+            cookie = None  # Initialize cookie variable
+            mediafire_data = None  # Initialize mediafire_data
+            entry_id = None  # Initialize entry_id
+            
             for attempt in range(max_attempts):
                 try:
                     # Get file size in GB and add 1GB buffer for space requirement
@@ -295,12 +299,17 @@ async def main():
                 
                     print(f"📁 File size: {file_size_gb:.2f} GB, requesting {required_space} GB space (Attempt {attempt + 1}/{max_attempts})")
                     
-                    mediafire = requests.get(f"http://47.237.25.164:9090/mediafire/with_space?space={required_space}")
-                    mediafire.raise_for_status()  # Raise exception for HTTP errors
-                    
-                    mediafire_data = mediafire.json()
-                    cookie = mediafire_data["cookie"]
-                    entry_id = mediafire_data["id"]
+                    # Only fetch from server on first attempt or if we don't have cookie data
+                    if attempt == 0 or not cookie:
+                        mediafire = requests.get(f"http://47.237.25.164:9090/mediafire/with_space?space={required_space}")
+                        mediafire.raise_for_status()  # Raise exception for HTTP errors
+                        
+                        mediafire_data = mediafire.json()
+                        cookie = mediafire_data["cookie"]
+                        entry_id = mediafire_data["id"]
+                        print(f"🔍 Using cookie from server (Attempt {attempt + 1})")
+                    else:
+                        print(f"🔍 Using refreshed cookie (Attempt {attempt + 1})")
                     
                     doc_id, free_space = media.upload_to_mediafire(output_file, cookie)
                     free_space = int(free_space / (1024**3))
@@ -322,6 +331,7 @@ async def main():
                         try:
                             new_cookie = get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
                             if new_cookie:
+                                cookie = new_cookie  # Use the new cookie directly in next attempt
                                 # Update the server with the new cookie
                                 cookie_update_response = requests.put(
                                     f"http://47.237.25.164:9090/mediafire/{entry_id}/cookie",
@@ -350,6 +360,7 @@ async def main():
                         try:
                             new_cookie = get_mediafire_cookie(mediafire_data["email"], mediafire_data["password"])
                             if new_cookie:
+                                cookie = new_cookie  # Use the new cookie directly in next attempt
                                 # Update the server with the new cookie
                                 cookie_update_response = requests.put(
                                     f"http://47.237.25.164:9090/mediafire/{entry_id}/cookie",
