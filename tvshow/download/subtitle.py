@@ -149,7 +149,22 @@ def clean_srt(input_path: str, tags=None):
         print(f"❌ Failed to clean: {input_path}")
         print(f"Error: {e}")
 
-def sub_async(sub_pa):
+def sub_async(video_path, subtitle_path, output_path):
+
+    command = [
+        "ffs",
+        video_path,
+        "-i", subtitle_path,
+        '-o', output_path,
+    ]
+
+    try:
+        subprocess.run(command, check=True)
+        print(f"✅ Subtitles sync ")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to add subtitles to video: {output_path}")
+        print(f"Error: {e}")
+
 # Example usage
 if __name__ == "__main__":
     show_id = "tt1592154"
